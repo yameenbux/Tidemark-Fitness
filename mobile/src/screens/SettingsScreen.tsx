@@ -13,9 +13,9 @@ import type { Reminder } from '../core/storage';
 import { AppearanceToggle, LengthToggle, UnitToggle } from '../components/Fields';
 import { DoneWindow } from '../components/KeyboardDone';
 import { Tabs } from '../components/ui';
-import { notify } from '../dialogs';
+import { askPassword, notify } from '../dialogs';
 import { success } from '../feel';
-import { FEATURES } from '../features';
+import { FEATURES, WEB_PREVIEW } from '../features';
 import { APP_STORE_ID, PRIVACY_URL, SUPPORT_EMAIL } from '../support';
 import { writeReviewUrl } from '../core/reviewAsk';
 import { PaywallSlot, usePlus } from '../plus';
@@ -186,6 +186,12 @@ export function SettingsScreen(p: SettingsProps) {
           {reviewUrl && <Row icon="heart" label="Rate Tidemark" hint="Opens the App Store to write a review"
             onPress={() => Linking.openURL(reviewUrl).catch(() => {})} />}
           <Row icon="book" label="Acknowledgements" onPress={() => setPage('credits')} />
+          {WEB_PREVIEW.offered && <Row icon="lock" label="Unlock owner preview" hint="For the app's owner: enter the preview passphrase"
+            onPress={async () => {
+              const pass = await askPassword('Owner preview', 'Enter the preview passphrase.');
+              if (pass == null) return;
+              if (WEB_PREVIEW.unlock(pass)) window.location.reload(); else notify('Not quite', 'That passphrase didn’t match.');
+            }} />}
           <Row icon="info" label="Version" value={build ? `${version} (${build})` : version} last />
         </Group>
         <Text style={[s.groupFootOut, { textAlign: 'center', marginTop: 4 }]}>Tidemark · the scale jumps, your trend doesn’t{'\n'}Targets and estimates are guidance, not medical advice.</Text>

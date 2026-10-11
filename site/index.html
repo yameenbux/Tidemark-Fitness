@@ -170,6 +170,15 @@
   .glide { position: absolute; left: 0; right: 0; top: 0; height: 0; border: 2.5px solid var(--plum-2); border-radius: 18px; pointer-events: none;
     opacity: 0; transition: transform .3s cubic-bezier(.16,1,.3,1), height .3s cubic-bezier(.16,1,.3,1); }
   .picker.ready .glide { opacity: 1; }
+  .waitlist { text-align: center; max-width: 620px; }
+  .waitlist-lede { color: var(--soft); font-size: 17px; line-height: 1.55; margin: 12px auto 22px; }
+  .waitlist-form { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; }
+  .waitlist-form input { flex: 1 1 240px; min-height: 48px; padding: 0 18px; border-radius: 999px; border: 1.5px solid var(--line);
+    background: var(--card); color: var(--ink); font: inherit; font-size: 16px; }
+  .waitlist-form input:focus-visible { outline: 3px solid var(--coral); outline-offset: 2px; }
+  .waitlist-form .btn-main { background: var(--coral); color: #1A0E12; border: 0; cursor: pointer; }
+  .waitlist-msg { min-height: 1.4em; margin: 12px 0 0; font-weight: 600; }
+  .waitlist-msg.ok { color: var(--mint); } .waitlist-msg.err { color: var(--link); }
   .soon-line { margin: 14px 6px 4px; text-align: center; color: var(--soft); font-size: 15px; }
   .js .plan .panel:not(.on) { display: none; }
   .panel + .panel { margin-top: 26px; } .js .panel + .panel { margin-top: 0; }
@@ -346,8 +355,8 @@
         <h1 class="rise"><span>The scale jumps.</span> <span class="calm">Your trend doesn’t.</span></h1>
         <p class="lede rise">Tidemark is a weight tracker for iPhone that reads your weigh-ins properly: a trend one odd day can’t drag, an honest weekly rate, and a plan to hold it against.</p>
         <div class="ctas rise">
-          <a class="btn btn-main" href="#plus">See Free and Plus</a>
-          <a class="btn btn-line" href="#promise">How your data stays private</a>
+          <a class="btn btn-main" href="#waitlist">Join the waitlist</a>
+          <a class="btn btn-line" href="#plus">See Free and Plus</a>
         </div>
         <p class="proof rise">Coming soon to iPhone, Android later · No account · Nothing leaves your phone</p>
       </div>
@@ -487,6 +496,21 @@
     </div>
   </section>
 
+
+  <section id="waitlist">
+    <div class="wrap waitlist">
+      <p class="kicker">Coming soon to iPhone</p>
+      <h2>Be first to know when it’s out</h2>
+      <p class="waitlist-lede">One email on launch day, with the launch price: £11.99 for your first year of Plus instead of £19.99. Nothing else, and you can unsubscribe in one tap.</p>
+      <form class="waitlist-form" id="waitlist-form" novalidate data-endpoint="">
+        <label class="sr" for="wl-email">Email address</label>
+        <input id="wl-email" name="email" type="email" autocomplete="email" inputmode="email" placeholder="you@example.com" required>
+        <button class="btn btn-main" type="submit">Join the waitlist</button>
+      </form>
+      <p class="waitlist-msg" id="waitlist-msg" role="status" aria-live="polite"></p>
+      <p class="fine">Your email is used only to tell you when Tidemark launches, then deleted. It never reaches the app. See <a href="#privacy">the privacy policy</a>.</p>
+    </div>
+  </section>
 
   <section id="plus">
     <div class="wrap">
@@ -893,6 +917,32 @@
     });
   }, { threshold: 0.5 }).observe(v);
 })();
+</script>
+<script>
+  // Waitlist. With a newsletter service connected (data-endpoint: its embed-subscribe URL) the address goes straight to it,
+  // and the service sends the confirmation email. Until then, the person's own mail app opens with a ready-made email
+  // to us, so nothing is collected by this page itself.
+  (function () {
+    var form = document.getElementById('waitlist-form'), msg = document.getElementById('waitlist-msg');
+    if (!form) return;
+    var say = function (text, ok) { msg.textContent = text; msg.className = 'waitlist-msg ' + (ok ? 'ok' : 'err'); };
+    form.addEventListener('submit', function (e) {
+      e.preventDefault();
+      var email = form.email.value.trim();
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { say('That doesn’t look like an email address.', false); form.email.focus(); return; }
+      var endpoint = form.getAttribute('data-endpoint');
+      if (!endpoint) {
+        location.href = 'mailto:yameen@ysbdesigns.uk?subject=' + encodeURIComponent('Tidemark waitlist')
+          + '&body=' + encodeURIComponent('Please tell me when Tidemark launches: ' + email);
+        say('Your email app should open with a message ready. Press send and you’re on the list.', true);
+        return;
+      }
+      var body = new FormData(); body.append('email', email);
+      fetch(endpoint, { method: 'POST', body: body, mode: 'no-cors' })
+        .then(function () { say('Nearly done: check your inbox and confirm, and you’re on the list.', true); form.reset(); })
+        .catch(function () { say('That didn’t send. Check your connection and try again.', false); });
+    });
+  })();
 </script>
 </body>
 </html>

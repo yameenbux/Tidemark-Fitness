@@ -502,7 +502,9 @@
       <p class="kicker">Coming soon to iPhone</p>
       <h2>Be first to know when it’s out</h2>
       <p class="waitlist-lede">One email on launch day, with the launch price: £11.99 for your first year of Plus instead of £19.99. Nothing else, and you can unsubscribe in one tap.</p>
-      <form class="waitlist-form" id="waitlist-form" novalidate data-endpoint="">
+      <!-- data-endpoint: https://buttondown.com/api/emails/embed-subscribe/USERNAME once the Buttondown list exists -->
+      <form class="waitlist-form" id="waitlist-form" novalidate data-endpoint="" method="post" target="_blank">
+        <input type="hidden" name="embed" value="1">
         <label class="sr" for="wl-email">Email address</label>
         <input id="wl-email" name="email" type="email" autocomplete="email" inputmode="email" placeholder="you@example.com" required>
         <button class="btn btn-main" type="submit">Join the waitlist</button>
@@ -919,8 +921,8 @@
 })();
 </script>
 <script>
-  // Waitlist. With a newsletter service connected (data-endpoint: its embed-subscribe URL) the address goes straight to it,
-  // and the service sends the confirmation email. Until then, the person's own mail app opens with a ready-made email
+  // Waitlist. With Buttondown connected (data-endpoint: its embed-subscribe URL) the address goes straight to it,
+  // and Buttondown sends the confirmation email. Until then, the person's own mail app opens with a ready-made email
   // to us, so nothing is collected by this page itself.
   (function () {
     var form = document.getElementById('waitlist-form'), msg = document.getElementById('waitlist-msg');
@@ -937,10 +939,11 @@
         say('Your email app should open with a message ready. Press send and you’re on the list.', true);
         return;
       }
-      var body = new FormData(); body.append('email', email);
-      fetch(endpoint, { method: 'POST', body: body, mode: 'no-cors' })
-        .then(function () { say('Nearly done: check your inbox and confirm, and you’re on the list.', true); form.reset(); })
-        .catch(function () { say('That didn’t send. Check your connection and try again.', false); });
+      // Buttondown takes a plain form post (no background request), and shows its own confirmation page in a new tab
+      form.action = endpoint;
+      HTMLFormElement.prototype.submit.call(form);
+      say('Nearly done: check your inbox and tap the confirmation link, and you’re on the list.', true);
+      form.reset();
     });
   })();
 </script>

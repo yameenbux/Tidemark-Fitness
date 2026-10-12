@@ -4,6 +4,10 @@ name: Deploy website to Pages
 #   /                     the website: what Tidemark is, support, and the privacy policy
 #   /app/                 the owner's private test build of the app, not a product (noindex)
 #   /privacy.html         the privacy policy
+#   /terms.html           the terms and conditions
+#   /thanks.html          where the waitlist form lands (noindex)
+#   /404.html             shown for any missing address
+#   /robots.txt, /sitemap.xml
 #   /classic/             the original web tracker
 # Served at https://tidemark.ysbdesigns.uk (Settings → Pages → Custom domain; a CNAME file is ignored when Actions
 # publishes). The old yameenbux.github.io/Tracker addresses redirect there.
@@ -43,6 +47,12 @@ jobs:
           EXPO_PUBLIC_WEB_PLUS_HASH: '4fc8ec9e7917f8e0c683bff7d9f1910a5c3ea7245e473b79673b28be062ae9aa'
       - name: Assemble the site
         run: node scripts/pages-site.js dist ../_site "" https://tidemark.ysbdesigns.uk
+        env:
+          # Visit counting is off until this repository variable holds a GoatCounter site code (Settings > Secrets and
+          # variables > Actions > Variables). It's a public site name, not a secret.
+          GOATCOUNTER_CODE: ${{ vars.GOATCOUNTER_CODE }}
+      - name: Check the site (links, alt text, page titles and descriptions, no secrets)
+        run: node scripts/check-site.js ../_site
       - uses: actions/upload-pages-artifact@56afc609e74202658d3ffba0e8f6dda462b719fa # v3.0.1
         with:
           path: _site

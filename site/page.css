@@ -1,0 +1,24 @@
+/* Shared by the website's small pages (terms, thanks, not found). Same look as privacy.html, which keeps its own copy
+   so it stays one self-contained file. System fonts only: these pages load nothing from anyone else. */
+:root { --bg: #FBF7F3; --ink: #241B33; --soft: #6E6577; --line: #EFE6DC; --accent: #C93A26; --box: #FFFFFF; }
+@media (prefers-color-scheme: dark) {
+  :root { --bg: #121019; --ink: #F2EEF6; --soft: #ADA5B8; --line: #2E2938; --accent: #FF8D7D; --box: #1C1925; }
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--ink); font: 17px/1.6 -apple-system, system-ui, 'Segoe UI', sans-serif; }
+main { max-width: 680px; margin: 0 auto; padding: 32px 20px 72px; }
+h1 { font: 700 36px/1.15 -apple-system, system-ui, sans-serif; letter-spacing: -0.5px; margin: 8px 0 4px; }
+h2 { font: 600 20px/1.3 -apple-system, system-ui, sans-serif; margin: 32px 0 6px; }
+.muted { color: var(--soft); }
+.box { background: var(--box); border: 1px solid var(--line); border-radius: 16px; padding: 18px 20px; margin-top: 20px; }
+a { color: var(--accent); text-underline-offset: 3px; }
+li { margin: 6px 0; }
+:focus-visible { outline: 3px solid var(--accent); outline-offset: 3px; border-radius: 4px; }
+.crumbs ol { list-style: none; display: flex; flex-wrap: wrap; gap: 6px; padding: 0; margin: 0 0 24px; font-size: 15px; color: var(--soft); }
+.crumbs li { margin: 0; }
+.crumbs li + li::before { content: "›"; margin-right: 6px; }
+.crumbs [aria-current] { color: var(--ink); }
+.btn { display: inline-block; margin-top: 24px; padding: 12px 22px; border-radius: 999px; background: var(--accent); color: #fff;
+       font-weight: 600; text-decoration: none; }
+@media (prefers-color-scheme: dark) { .btn { color: #1A0E12; } }
+footer { max-width: 680px; margin: 0 auto; padding: 0 20px 40px; font-size: 14px; color: var(--soft); }

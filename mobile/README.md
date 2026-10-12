@@ -11,8 +11,8 @@ You need a computer (Windows is fine) and your iPhone on the same Wi-Fi.
 2. On your iPhone, install **Expo Go** from the App Store.
 3. In a terminal:
    ```bash
-   git clone https://github.com/yameenbux/Tracker.git
-   cd Tracker/mobile
+   git clone https://github.com/yameenbux/Tidemark-Fitness.git
+   cd Tidemark-Fitness/mobile
    npm install
    npx expo start
    ```

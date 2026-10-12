@@ -6,14 +6,22 @@
 <title>Tidemark · The weight tracker that reads the trend</title>
 <meta name="color-scheme" content="dark">
 <meta name="theme-color" content="#120E1C">
-<link rel="icon" href="icon.png">
+<link rel="icon" href="favicon.ico" sizes="any">
+<link rel="icon" href="icon.png" type="image/png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="preload" href="fonts/SpaceGrotesk_700Bold.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="fonts/HankenGrotesk_400Regular.woff2" as="font" type="font/woff2" crossorigin>
+<!-- HTTPS only: GitHub Pages redirects http to https when "Enforce HTTPS" is ticked; this covers anything that slips through -->
+<meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
+<script>if (location.protocol === 'http:' && !/^(localhost|127\.0\.0\.1)$/.test(location.hostname)) location.replace('https:' + location.href.slice(5));</script>
 <script>document.documentElement.classList.add('js')</script>
 <style>
-  /* Everything on this page is served from this site: no font services, no analytics, no cookies. */
-  @font-face { font-family: 'Space Grotesk'; font-weight: 700; font-display: swap; src: url(fonts/SpaceGrotesk_700Bold.ttf) format('truetype'); }
-  @font-face { font-family: 'Space Grotesk'; font-weight: 500; font-display: swap; src: url(fonts/SpaceGrotesk_500Medium.ttf) format('truetype'); }
-  @font-face { font-family: 'Hanken Grotesk'; font-weight: 400; font-display: swap; src: url(fonts/HankenGrotesk_400Regular.ttf) format('truetype'); }
-  @font-face { font-family: 'Hanken Grotesk'; font-weight: 600; font-display: swap; src: url(fonts/HankenGrotesk_600SemiBold.ttf) format('truetype'); }
+  /* Everything on this page is served from this site: no font services and no cookies. The only outside request is the
+     optional cookie-free visit counter, added at build time when it's switched on (see mobile/scripts/pages-site.js). */
+  @font-face { font-family: 'Space Grotesk'; font-weight: 700; font-display: swap; src: url(fonts/SpaceGrotesk_700Bold.woff2) format('woff2'), url(fonts/SpaceGrotesk_700Bold.ttf) format('truetype'); }
+  @font-face { font-family: 'Space Grotesk'; font-weight: 500; font-display: swap; src: url(fonts/SpaceGrotesk_500Medium.woff2) format('woff2'), url(fonts/SpaceGrotesk_500Medium.ttf) format('truetype'); }
+  @font-face { font-family: 'Hanken Grotesk'; font-weight: 400; font-display: swap; src: url(fonts/HankenGrotesk_400Regular.woff2) format('woff2'), url(fonts/HankenGrotesk_400Regular.ttf) format('truetype'); }
+  @font-face { font-family: 'Hanken Grotesk'; font-weight: 600; font-display: swap; src: url(fonts/HankenGrotesk_600SemiBold.woff2) format('woff2'), url(fonts/HankenGrotesk_600SemiBold.ttf) format('truetype'); }
 
   /* The app's own palette (mobile/src/theme.ts). The hero is plum in both themes, like the app icon. */
   /* One dark palette: the page sits on Tidemark's plum night, whatever the device is set to */
@@ -179,6 +187,8 @@
   .waitlist-form .btn-main { background: var(--coral); color: #1A0E12; border: 0; cursor: pointer; }
   .waitlist-msg { min-height: 1.4em; margin: 12px 0 0; font-weight: 600; }
   .waitlist-msg.ok { color: var(--mint); } .waitlist-msg.err { color: var(--link); }
+  .waitlist-form input[aria-invalid="true"] { border-color: var(--link); }
+  .trap { position: absolute; left: -10000px; width: 1px; height: 1px; overflow: hidden; }
   .soon-line { margin: 14px 6px 4px; text-align: center; color: var(--soft); font-size: 15px; }
   .js .plan .panel:not(.on) { display: none; }
   .panel + .panel { margin-top: 26px; } .js .panel + .panel { margin-top: 0; }
@@ -506,7 +516,9 @@
       <form class="waitlist-form" id="waitlist-form" novalidate data-endpoint="" method="post" target="_blank">
         <input type="hidden" name="embed" value="1">
         <label class="sr" for="wl-email">Email address</label>
-        <input id="wl-email" name="email" type="email" autocomplete="email" inputmode="email" placeholder="you@example.com" required>
+        <input id="wl-email" name="email" type="email" autocomplete="email" inputmode="email" placeholder="you@example.com" required maxlength="254" aria-describedby="waitlist-msg">
+        <!-- Spam trap: hidden from people and screen readers, and has no name, so it's never sent. Bots that fill it are ignored. -->
+        <div class="trap" aria-hidden="true"><label>Leave this empty <input id="wl-trap" type="text" tabindex="-1" autocomplete="off"></label></div>
         <button class="btn btn-main" type="submit">Join the waitlist</button>
       </form>
       <p class="waitlist-msg" id="waitlist-msg" role="status" aria-live="polite"></p>
@@ -670,7 +682,7 @@
 <footer>
   <div class="wrap">
     <p>Tidemark is made by YSB Ventures Ltd, registered in England and Wales, company number 16022339.</p>
-    <p><a href="#privacy">Privacy policy</a> · <a href="mailto:yameen@ysbdesigns.uk">Support</a></p>
+    <p><a href="privacy.html">Privacy policy</a> · <a href="terms.html">Terms</a> · <a href="mailto:yameen@ysbdesigns.uk">Support</a></p>
   </div>
 </footer>
 
@@ -922,16 +934,41 @@
 </script>
 <script>
   // Waitlist. With Buttondown connected (data-endpoint: its embed-subscribe URL) the address goes straight to it,
-  // and Buttondown sends the confirmation email. Until then, the person's own mail app opens with a ready-made email
-  // to us, so nothing is collected by this page itself.
+  // Buttondown sends the confirmation email (double opt-in, its main defence against fake sign-ups), and this page moves
+  // on to thanks.html. Until then, the person's own mail app opens with a ready-made email to us, so nothing is
+  // collected by this page itself. Spam: a hidden trap field, a minimum time on the page, and one sign-up per visit.
   (function () {
     var form = document.getElementById('waitlist-form'), msg = document.getElementById('waitlist-msg');
     if (!form) return;
-    var say = function (text, ok) { msg.textContent = text; msg.className = 'waitlist-msg ' + (ok ? 'ok' : 'err'); };
+    var input = form.email, trap = document.getElementById('wl-trap'), opened = Date.now(), sent = false;
+    var TYPOS = { 'gmial.com': 'gmail.com', 'gmai.com': 'gmail.com', 'gmail.co': 'gmail.com', 'gmail.co.uk': 'gmail.com',
+                  'hotmial.com': 'hotmail.com', 'hotmail.co': 'hotmail.co.uk', 'hotmai.co.uk': 'hotmail.co.uk',
+                  'outlok.com': 'outlook.com', 'icloud.co': 'icloud.com', 'iclod.com': 'icloud.com', 'yahoo.co': 'yahoo.co.uk' };
+    var say = function (text, ok) {
+      msg.textContent = text; msg.className = 'waitlist-msg ' + (ok ? 'ok' : 'err');
+      input.setAttribute('aria-invalid', ok ? 'false' : 'true');
+    };
+    // Why an address can't be used, in plain words, or '' when it can
+    function problem(email) {
+      if (!email) return 'Please enter your email address.';
+      if (email.length > 254) return 'That email address is too long.';
+      if (/\s/.test(email)) return 'Email addresses can’t contain spaces.';
+      var at = email.lastIndexOf('@');
+      if (at < 1) return 'Your email address needs an @, like you@example.com.';
+      var domain = email.slice(at + 1).toLowerCase();
+      if (!/^[a-z0-9-]+(\.[a-z0-9-]+)*\.[a-z]{2,}$/.test(domain) || domain.indexOf('..') >= 0) return 'The part after the @ doesn’t look right.';
+      if (TYPOS[domain]) return 'Did you mean ' + email.slice(0, at + 1) + TYPOS[domain] + '? Fix it and try again.';
+      return '';
+    }
+    input.addEventListener('input', function () { if (input.getAttribute('aria-invalid') === 'true' && !problem(input.value.trim())) { msg.textContent = ''; input.removeAttribute('aria-invalid'); } });
     form.addEventListener('submit', function (e) {
       e.preventDefault();
-      var email = form.email.value.trim();
-      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { say('That doesn’t look like an email address.', false); form.email.focus(); return; }
+      if (sent) return;
+      var email = input.value.trim(), why = problem(email);
+      if (why) { say(why, false); input.focus(); return; }
+      // A filled trap or a sign-up within two seconds of the page opening is a bot: look done, send nothing
+      if (trap.value || Date.now() - opened < 2000) { sent = true; say('Thanks, you’re nearly on the list.', true); return; }
+      sent = true;
       var endpoint = form.getAttribute('data-endpoint');
       if (!endpoint) {
         location.href = 'mailto:yameen@ysbdesigns.uk?subject=' + encodeURIComponent('Tidemark waitlist')
@@ -939,11 +976,12 @@
         say('Your email app should open with a message ready. Press send and you’re on the list.', true);
         return;
       }
-      // Buttondown takes a plain form post (no background request), and shows its own confirmation page in a new tab
+      // Buttondown takes a plain form post (no background request). It opens in a new tab, where Buttondown can ask
+      // for any check it wants, and this tab moves on to the thank-you page.
       form.action = endpoint;
       HTMLFormElement.prototype.submit.call(form);
-      say('Nearly done: check your inbox and tap the confirmation link, and you’re on the list.', true);
-      form.reset();
+      say('Nearly done: check your inbox and tap the confirmation link.', true);
+      setTimeout(function () { location.href = 'thanks.html'; }, 600);
     });
   })();
 </script>

@@ -174,7 +174,7 @@ outside service it talks to.
 
 ```
 mobile/          the app: Expo, React Native, TypeScript (start here)
-site/            the website: tidemark.ysbdesigns.uk (index.html and its images)
+site/            the website: tidemark.ysbdesigns.uk (home, terms, thanks, 404 pages and their files)
 .github/         CI, the iOS build, the website deploy and the uptime check
 index.html       the original single-file web tracker, served at /classic
 privacy.html     the privacy policy, served at /privacy.html
@@ -247,6 +247,27 @@ to the waitlist paragraph of `privacy.html`.
 **Settings → Pages → Source** must be **GitHub Actions**, not a branch.
 The website is `site/index.html`. The privacy section is filled in from
 `privacy.html` when the site is built, so edit the policy in one place only.
+
+The other pages are `site/terms.html`, `site/thanks.html` (where the waitlist
+form lands) and `site/404.html`, styled by `site/page.css`. The build
+(`mobile/scripts/pages-site.js`) adds each page's title, description, link
+preview, favicons and breadcrumbs for search results, and writes `robots.txt`
+and `sitemap.xml`. Then `mobile/scripts/check-site.js` checks every internal link
+and #anchor, alt text, titles, descriptions and canonical addresses, and scans
+for anything shaped like a secret key. If any check fails, nothing is published.
+Run it locally with `node scripts/check-site.js <site-dir> --external` to fetch
+outside links too.
+
+**Visit counting** is off. To turn it on, make a free
+[GoatCounter](https://www.goatcounter.com) site and set the repository variable
+`GOATCOUNTER_CODE` (Settings → Secrets and variables → Actions → Variables) to
+its code. The next deploy adds the counter to the public pages and changes the
+privacy policy's website paragraph to say what it records. GoatCounter sets no
+cookies and stores nothing on the device, so the site still needs no cookie
+banner. Sign-ups show up as visits to `/thanks.html`.
+
+**HTTPS:** tick **Settings → Pages → Enforce HTTPS**. The pages also upgrade
+themselves if they're ever opened over http.
 
 `site-check.yml` loads the main pages every 6 hours and fails, which makes GitHub
 email you, if one is down. Only the deploy job can publish: the build job, which

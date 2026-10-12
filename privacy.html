@@ -20,9 +20,17 @@
   .box { background: var(--box); border: 1px solid var(--line); border-radius: 16px; padding: 18px 20px; margin-top: 20px; }
   a { color: var(--accent); }
   li { margin: 6px 0; }
+  .crumbs { max-width: 680px; margin: 0 auto; padding: 24px 20px 0; }
+  .crumbs ol { list-style: none; display: flex; flex-wrap: wrap; gap: 6px; padding: 0; margin: 0; font-size: 15px; color: var(--soft); }
+  .crumbs li { margin: 0; } .crumbs li + li::before { content: "›"; margin-right: 6px; } .crumbs [aria-current] { color: var(--ink); }
+  main { padding-top: 24px; }
 </style>
 </head>
 <body>
+<!-- Outside <main> on purpose: the website sets only the <main> part into its own privacy section -->
+<nav class="crumbs" aria-label="Breadcrumb">
+  <ol><li><a href="./">Tidemark</a></li><li><span aria-current="page">Privacy policy</span></li></ol>
+</nav>
 <main>
   <div class="eyebrow">Tidemark</div>
   <h1>Privacy policy</h1>
@@ -86,7 +94,7 @@
   <p>If this policy changes, the new version will be posted on this page with a new date.</p>
   <p>Tidemark Plus is bought through Apple. Apple handles the payment; Tidemark never sees your card, name or Apple ID, only whether this Apple ID has Plus, which it checks with the App Store on your phone and remembers there. There's still no account and nothing of yours leaves your phone.</p>
   <p>If Tidemark ever hits an error, it can open an email to support with the error message and app version. Nothing is sent unless you choose to send that email, and it never contains your weights or other entries. Tidemark has no crash-reporting or analytics service.</p>
-  <p>Questions, support or a privacy request: email <a href="mailto:yameen@ysbdesigns.uk">yameen@ysbdesigns.uk</a>.</p>
+  <p>Questions, support or a privacy request: email <a href="mailto:yameen@ysbdesigns.uk">yameen@ysbdesigns.uk</a>. The <a href="terms.html">terms and conditions</a> cover the website, the waitlist and Tidemark Plus.</p>
 
   <h2>Not medical advice</h2>
   <p>Tidemark’s targets, trends and calorie estimates are general guidance worked out from the numbers you enter. They aren’t medical advice;

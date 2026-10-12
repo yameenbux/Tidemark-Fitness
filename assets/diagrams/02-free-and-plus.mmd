@@ -3,27 +3,26 @@ flowchart TB
 
     subgraph FREE["Free: the whole core"]
         direction LR
-        F1["<b>Today</b><br/>trend, pace, habits"]
-        F2["<b>Trend</b><br/>chart, change table,<br/>full history"]
-        F3["<b>Your plan</b><br/>goal, pace, breaks,<br/>re-plan from here"]
-        F4["<b>Up to 3 habits</b><br/>30-day dot grids"]
-        F5["<b>Reminders, Face ID,<br/>backups</b>"]
+        F1["<b>Today and Trend</b><br/>trend, pace, history,<br/>why the scale jumped"]
+        F2["<b>Your plan</b><br/>goal, breaks, holding<br/>at your goal"]
+        F3["<b>Up to 3 habits</b><br/>and your waist"]
+        F4["<b>Medication log</b><br/>doses and reminders"]
+        F5["<b>Apple Health, widgets,<br/>reminders, Face ID, backups</b>"]
     end
 
-    subgraph PLUS["Tidemark Plus: £1.99 a month, £11.99 a year or £19.99 once"]
+    subgraph PLUS["Tidemark Plus: £2.99 a month, £19.99 a year or £49.99 once"]
         direction LR
-        P1["<b>Medication log</b><br/>doses and reminders"]
-        P2["<b>Up to 6 habits</b>"]
-        P3["<b>Measurements<br/>and photos</b>"]
-        P4["<b>Calories</b><br/>and what you burn"]
-        P5["<b>Password-protected<br/>backups</b>"]
+        P1["<b>Your trend at each dose</b><br/>and side effects"]
+        P2["<b>A report</b><br/>for your doctor"]
+        P3["<b>Photos and more<br/>measurements</b>"]
+        P4["<b>Calorie estimate,<br/>protein target</b>"]
+        P5["<b>Up to 6 habits,<br/>protected backups</b>"]
     end
 
-    subgraph NEXT["In development"]
+    subgraph NEXT["Not built yet"]
         direction LR
-        N1["<b>Apple Health</b>"]
-        N2["<b>iCloud sync</b>"]
-        N3["<b>Widgets</b>"]
+        N1["<b>iCloud sync</b>"]
+        N2["<b>Apple Watch</b>"]
     end
 
     APP --> FREE
@@ -36,4 +35,4 @@ flowchart TB
     classDef ext fill:#F0E8E0,stroke:#8F8276,stroke-width:1.5px,color:#241B33
     class APP core
     class F1,F2,F3,F4,F5,P1,P2,P3,P4,P5 live
-    class N1,N2,N3 dev
+    class N1,N2 dev

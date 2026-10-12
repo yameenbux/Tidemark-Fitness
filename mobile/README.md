@@ -25,14 +25,15 @@ If Expo Go says the project needs a different SDK version, update Expo Go from t
 
 **Free and Plus.** The core is free: weigh-ins, the trend and plan, notes and tags on a day, Apple Health sync, the
 medication log with dose reminders, holding mode after the goal, "hide my weight", reminders, Face ID lock, backups,
-up to 3 habits. **Tidemark Plus** (£1.99 a month or £11.99 a year, each with a 7-day free trial, or £19.99 once) adds
+up to 3 habits, waist measurements. **Tidemark Plus** (£2.99 a month, £19.99 a year with a 7-day free trial or a launch
+price, or £49.99 once) adds
 medication insights (trend at each dose, injection-site rotation, side effects against the dose cycle), a PDF report
-for a doctor, a daily protein minimum, all 6 habits, measurements and photos, calories, and password-protected backups. It's sold through Apple with
+for a doctor, a daily protein minimum, all 6 habits, photos and the other measurements, calories, and password-protected backups. It's sold through Apple with
 StoreKit 2 (`expo-iap`): no account, no server and no third-party purchase SDK, so the privacy answer stays "Data Not
 Collected". Logic in `src/core/plus.ts`; store calls in `src/purchases.ts`; `usePlus()` and the paywall in `src/plus.tsx`.
 Anything entered in a Plus feature is kept if Plus lapses, and shows again when it's back. Product IDs (create these
-in App Store Connect): `com.yameenbux.tidemark.plus.monthly` and `.yearly` (one subscription group, 7-day free trial
-introductory offer) and `com.yameenbux.tidemark.plus.lifetime` (non-consumable).
+in App Store Connect): `com.yameenbux.tidemark.plus.monthly` and `.yearly` (one subscription group; yearly carries the
+introductory offer: the £11.99 launch price, then a 7-day free trial) and `com.yameenbux.tidemark.plus.lifetime` (non-consumable).
 
 - **Setup**: one question per screen — current weight, goal, then a pace (Gentle / Steady / Brisk / Fast, as a share of
   body weight per week), with a "How is this worked out?" explainer. Optional Face ID lock at the end.

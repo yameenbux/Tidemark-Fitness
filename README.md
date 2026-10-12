@@ -70,7 +70,7 @@ rather than trailing a week behind it the way a plain moving average does.
 One app, free to download. The whole core is free; **Tidemark Plus** adds the
 extras for people who want them.
 
-<img src="assets/diagrams/02-free-and-plus.svg" alt="What's free, what's in Tidemark Plus, and what is still in development" width="100%">
+<img src="assets/diagrams/02-free-and-plus.svg" alt="What's free, what's in Tidemark Plus at £2.99 a month, £19.99 a year or £49.99 once, and what is not built yet" width="100%">
 
 > [!IMPORTANT]
 > **Everything in green is built, tested and working. It is not on the App Store
@@ -81,10 +81,11 @@ extras for people who want them.
 > Plus, iOS file encryption while the phone is locked, and the production
 > hardening plugin.
 >
-> **Apple Health sync and the widgets are built but unproven on a device**, like
-> the rest of the native code (the automatic-backup folder module has never
-> been compiled). **iCloud sync and an Apple Watch app are not built.** Don't
-> describe them anywhere, including the App Store listing, as features.
+> **Apple Health sync, the widgets and automatic backups are built, and the
+> whole native app compiles in CI** (`ios-build.yml`), but none of it has run on
+> a phone. The 24-step device test plan in `mobile/README.md` is what proves it.
+> **iCloud sync and an Apple Watch app are not built.** Don't describe them
+> anywhere, including the App Store listing, as features.
 
 ---
 
@@ -173,6 +174,8 @@ outside service it talks to.
 
 ```
 mobile/          the app: Expo, React Native, TypeScript (start here)
+site/            the website: tidemark.ysbdesigns.uk (index.html and its images)
+.github/         CI, the iOS build, the website deploy and the uptime check
 index.html       the original single-file web tracker, served at /classic
 privacy.html     the privacy policy, served at /privacy.html
 brand/           the logo, its generator and the brand sheet
@@ -201,7 +204,14 @@ npx expo lint
 ```
 
 CI runs all three on every push (`.github/workflows/ci.yml`) and fails if test
-coverage drops below the floor set in `mobile/package.json`.
+coverage drops below the floor set in `mobile/package.json`. It also checks the
+production config keeps its hardening and audits runtime dependencies.
+
+When a pull request touches anything native (`mobile/modules`, `plugins`,
+`app.json`, `package.json`, the widgets), **`ios-build.yml`** builds the whole
+iPhone app for the simulator on a macOS 26 runner, unsigned. Expo SDK 57 needs
+Xcode 26.4 or later; older ones fail inside Expo's own `expo-modules-jsi`, not in
+Tidemark's code. That's also the minimum for EAS builds.
 
 ### Deploying the website
 
@@ -209,15 +219,30 @@ coverage drops below the floor set in `mobile/package.json`.
 
 | Address | What it is |
 | :--- | :--- |
-| `tidemark.ysbdesigns.uk/` | The website: what Tidemark does, Free and Plus, support questions and the full privacy policy. Use it as the App Store **Support URL** |
+| `tidemark.ysbdesigns.uk/` | The website: what Tidemark does, the launch waitlist, Free and Plus, support questions and the full privacy policy. Use it as the App Store **Support URL** |
 | `/privacy.html` | The privacy policy on its own, which every app build links to. This is the page that has to stay up |
-| `/app/` | The web build of the app: the owner's private test tool, not a product. `noindex`, and not linked from anywhere |
+| `/app/` | The web build of the app: the owner's private test tool, not a product. `noindex`, and not linked from anywhere. Plus is locked behind the owner's passphrase (below) |
 | `/classic/` | The original tracker, kept for the owner's old data. `noindex` |
 
 The web build is not offered to anyone, so the privacy policy doesn't cover it.
 It keeps its data in the browser's storage for `tidemark.ysbdesigns.uk`, which
 nothing else is served from. Photos are switched off on web, because they
 would fill the browser's storage.
+
+**Plus in the web build needs the owner's passphrase.** Only its SHA-256 is in
+the repo (`EXPO_PUBLIC_WEB_PLUS_HASH` in `pages.yml`); the passphrase itself is
+never committed. Unlock once per browser, either by opening `/app/?plus=<passphrase>`
+or from **Settings → Unlock owner preview**. A web app added to the Home Screen
+always opens on plain `/app/` with its own storage, so use the Settings row
+there. It's a lock against casual use, not real security: the web build runs in
+the browser and could be patched. To change the passphrase, put the SHA-256 of
+the new one in `pages.yml`.
+
+**The waitlist** is the "Join the waitlist" section of `site/index.html`. Until
+a Buttondown list is connected, it opens the visitor's own mail app with a ready
+email to the support address. To connect it, set the form's `data-endpoint` to
+`https://buttondown.com/api/emails/embed-subscribe/<username>` and add Buttondown
+to the waitlist paragraph of `privacy.html`.
 
 **Settings → Pages → Source** must be **GitHub Actions**, not a branch.
 The website is `site/index.html`. The privacy section is filled in from
@@ -248,7 +273,14 @@ installs packages, gets read access only, and every action is pinned to a commit
 | The paywall | `mobile/src/components/Paywall.tsx` |
 | The tabs (Today, Trend, Habits, Body) | `mobile/src/screens/Tabs.tsx` |
 | Setup, one question per screen | `mobile/src/screens/Onboarding.tsx` |
-| Settings | `mobile/src/screens/SettingsScreen.tsx` |
+| Settings: the main list | `mobile/src/screens/SettingsScreen.tsx` |
+| Settings: each sub-page, and the list parts | `mobile/src/screens/settings/` |
+| Saving a weigh-in: Health, Undo, the save message | `mobile/src/useWeighIn.ts` |
+| Apple Health sync | `mobile/src/core/health.ts`, `mobile/src/useHealth.ts` |
+| Automatic backups | `mobile/src/core/autoBackup.ts`, `mobile/src/useAutoBackup.ts`, `mobile/modules/backup-folder/` |
+| When to ask for an App Store rating | `mobile/src/core/reviewAsk.ts` |
+| The web preview lock | `mobile/src/core/previewKey.ts`, `mobile/src/features.ts` |
+| The website and the waitlist | `site/index.html` |
 | What's saved, and how it's checked on load | `mobile/src/core/storage.ts` |
 | Backup files, plain and protected | `mobile/src/core/backup.ts`, `mobile/src/core/vault.ts` |
 | Reminders | `mobile/src/reminders.ts` |
@@ -371,9 +403,19 @@ In App Store Connect, once the developer account is approved:
    non-consumable `com.yameenbux.tidemark.plus.lifetime` (£49.99).
 5. **Fill in the App Store ID** (App Information → Apple ID) as `APP_STORE_ID`
    in `mobile/src/support.ts`, so Settings can link to the review page.
-6. **Build and test**: `npx eas-cli build -p ios --profile production`, then
-   `npx eas-cli submit -p ios --latest`, then buy, restore and cancel in
-   TestFlight with a sandbox tester.
+6. **Answer the export-compliance questions.** Builds with password-protected
+   backups declare their own encryption, and selling in France needs a French
+   encryption declaration. `mobile/COMPLIANCE.md` has the steps.
+7. **Build and test**: `npx eas-cli build -p ios --profile production` (Xcode
+   26.4 or later), then `npx eas-cli submit -p ios --latest`. Then run the
+   device test plan in `mobile/README.md`: buy, restore and cancel in
+   TestFlight with a sandbox tester, and check Health, backups and widgets on a
+   real phone.
+8. **In the App Review notes**, say that automatic backups leave out readings
+   from Apple Health (Guideline 5.1.3), and only a backup the person exports
+   themselves includes them; that medication logging gives no dosing advice;
+   and that there's no account, so there's nothing to delete beyond
+   Settings → Delete all my data.
 
 Risky features can be switched off for a build without touching the code: set
 `EXPO_PUBLIC_DISABLE_MEDICATION=1` or `EXPO_PUBLIC_DISABLE_PROTECTED_BACKUPS=1`

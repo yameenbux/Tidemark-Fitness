@@ -137,7 +137,7 @@ fs.writeFileSync(path.join(out, 'index.html'), pickLaunchState(site.replace(slot
 addHead(path.join(out, 'index.html'), meta({ title: 'Tidemark · The weight tracker that reads the trend', page: '',
   description: 'A private iPhone weight tracker. See your trend, not the daily noise, with a plan, habits and an optional medication log. No account; data stays on your phone.' })
   + `<script type="application/ld+json">${JSON.stringify({ '@context': 'https://schema.org', '@type': 'Organization',
-    name: 'YSB Ventures Ltd', url: siteUrl || undefined, email: 'yameen@ysbdesigns.uk', brand: { '@type': 'Brand', name: 'Tidemark' } })}</script>`);
+    name: 'YSB Ventures Ltd', url: siteUrl || undefined, email: 'support@ysbdesigns.uk', brand: { '@type': 'Brand', name: 'Tidemark' } })}</script>`);
 for (const f of ['favicon.ico', 'apple-touch-icon.png', 'page.css'])
   fs.copyFileSync(path.join(repo, 'site', f), path.join(out, f));
 fs.copyFileSync(path.join(repo, 'site', 'icon-128.png'), path.join(out, 'icon.png'));   // 128px: it's only ever shown small

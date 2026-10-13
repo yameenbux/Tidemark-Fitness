@@ -2,7 +2,7 @@ import * as Application from 'expo-application';
 import Constants from 'expo-constants';
 import { Platform } from 'react-native';
 
-export const SUPPORT_EMAIL = 'yameen@ysbdesigns.uk';
+export const SUPPORT_EMAIL = 'support@ysbdesigns.uk';
 export const PRIVACY_URL = 'https://tidemark.ysbdesigns.uk/privacy.html';
 /**
  * The app's numeric App Store ID (App Store Connect → the app → App Information → Apple ID). It only exists once the

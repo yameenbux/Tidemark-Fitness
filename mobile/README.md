@@ -129,7 +129,7 @@ What each protection is, and what it isn't:
 
 CI compiles everything for the simulator (`.github/workflows/ios-build.yml`), which proves it builds, not that it works.
 Run this once on a real iPhone from **TestFlight**. Purchases there use Apple's sandbox, so nothing is charged. The
-Expo project is `@ysb-designs/tidemark`, and signing is managed by EAS for the YSB Ventures team. To make a build:
+Expo project is `@ysbdesigns/tidemark`, and signing is managed by EAS for the YSB Ventures team. To make a build:
 `npx --yes eas-cli@latest build -p ios --profile production`, then `npx --yes eas-cli@latest submit -p ios --latest`.
 Each line says what should happen; anything else is a bug.
 

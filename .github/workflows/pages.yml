@@ -5,7 +5,6 @@ name: Deploy website to Pages
 #   /app/                 the owner's private test build of the app, not a product (noindex)
 #   /privacy.html         the privacy policy
 #   /terms.html           the terms and conditions
-#   /thanks.html          where the waitlist form lands (noindex)
 #   /404.html             shown for any missing address
 #   /robots.txt, /sitemap.xml
 #   /classic/             the original web tracker
@@ -51,6 +50,8 @@ jobs:
           # Visit counting is off until this repository variable holds a GoatCounter site code (Settings > Secrets and
           # variables > Actions > Variables). It's a public site name, not a secret.
           GOATCOUNTER_CODE: ${{ vars.GOATCOUNTER_CODE }}
+          # "true" on launch day: the site's "coming soon" lines become App Store links
+          APP_LIVE: ${{ vars.APP_LIVE }}
       - name: Check the site (links, alt text, page titles and descriptions, no secrets)
         run: node scripts/check-site.js ../_site
       - uses: actions/upload-pages-artifact@56afc609e74202658d3ffba0e8f6dda462b719fa # v3.0.1

@@ -28,6 +28,15 @@ fs.copyFileSync(path.join(mobile, 'assets', 'social.png'), path.join(out, 'socia
 const gcCode = (process.env.GOATCOUNTER_CODE || '').trim();
 if (gcCode && !/^[a-z0-9-]{2,50}$/.test(gcCode)) throw new Error('GOATCOUNTER_CODE should be the site code only, e.g. tidemark');
 const analytics = gcCode ? `<script data-goatcounter="https://${gcCode}.goatcounter.com/count" async src="https://gc.zgo.at/count.js"></script>` : '';
+// Before launch the site says "coming soon"; once the repository variable APP_LIVE is "true" it links to the App Store
+// instead. The page marks both versions (<!--LIVE-->…<!--/LIVE--> and <!--SOON-->…<!--/SOON-->) and the build keeps one.
+const live = (process.env.APP_LIVE || '').trim().toLowerCase() === 'true';
+const pickLaunchState = html => {
+  if (!/<!--LIVE-->/.test(html) || !/<!--SOON-->/.test(html)) throw new Error('site/index.html lost its LIVE/SOON markers');
+  const [keep, drop] = live ? ['LIVE', 'SOON'] : ['SOON', 'LIVE'];
+  return html.replace(new RegExp(`<!--${drop}-->[\\s\\S]*?<!--/${drop}-->`, 'g'), '')
+    .replace(new RegExp(`<!--/?${keep}-->`, 'g'), '');
+};
 const esc = t => t.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
 const meta = ({ title, description, page, noindex }) => [
   `<meta name="description" content="${esc(description)}">`,
@@ -124,7 +133,7 @@ const policyBody = `<div class="policy-card">
       + `<div class="policy-panel">${sec.slice(end + 5).trim()}</div></details>`;
   }).join('\n  ')}
 </div>`;
-fs.writeFileSync(path.join(out, 'index.html'), site.replace(slot, () => policyBody));
+fs.writeFileSync(path.join(out, 'index.html'), pickLaunchState(site.replace(slot, () => policyBody)));
 addHead(path.join(out, 'index.html'), meta({ title: 'Tidemark · The weight tracker that reads the trend', page: '',
   description: 'A private iPhone weight tracker. See your trend, not the daily noise, with a plan, habits and an optional medication log. No account; data stays on your phone.' })
   + `<script type="application/ld+json">${JSON.stringify({ '@context': 'https://schema.org', '@type': 'Organization',
@@ -146,20 +155,19 @@ addHead(policyFile, meta({ title: 'Tidemark · Privacy policy', page: 'privacy.h
   description: 'Tidemark collects no data. Everything you enter stays on your phone: no account, no server, no analytics, no ads.' })
   + icons + crumbs(['Tidemark', ''], ['Privacy policy', 'privacy.html']));
 
-// The small pages: terms, the waitlist thank-you page, and the page GitHub Pages shows for any missing address
+// The small pages: terms, and the page GitHub Pages shows for any missing address
 const page = (file, title, description, extra = '', noindex = false) => {
   fs.copyFileSync(path.join(repo, 'site', file), path.join(out, file));
   addHead(path.join(out, file), meta({ title, description, page: file, noindex }) + (file === '404.html' ? '' : icons) + extra);
 };
 page('terms.html', 'Tidemark · Terms and conditions',
-  'The terms for the Tidemark website, waitlist and Tidemark Plus: not medical advice, subscriptions through Apple, and your consumer rights.',
+  'The terms for the Tidemark website and Tidemark Plus: not medical advice, subscriptions through Apple, and your consumer rights.',
   crumbs(['Tidemark', ''], ['Terms and conditions', 'terms.html']));
-page('thanks.html', 'Tidemark · You’re nearly on the list', 'Check your inbox and confirm your email to join the Tidemark waitlist.', '', true);
 page('404.html', 'Tidemark · Page not found', 'There’s nothing at this address.', '', true);
-// Counted pages that aren't indexed: the thank-you page is how sign-ups show up in the visit counts
-if (analytics) for (const f of ['thanks.html', '404.html']) addHead(path.join(out, f), analytics);
+// The not-found page isn't indexed but is still counted, so broken links pointing here show up in the visit counts
+if (analytics) addHead(path.join(out, '404.html'), analytics);
 
-// Search engines: everything public is listed; the test build, classic tracker and thank-you page carry noindex instead
+// Search engines: everything public is listed; the test build, classic tracker and not-found page carry noindex instead
 // of a robots.txt block, because a blocked page can't be read, so its noindex is never seen
 const today = new Date().toISOString().slice(0, 10);
 if (siteUrl) {

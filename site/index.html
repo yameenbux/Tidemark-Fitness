@@ -178,17 +178,7 @@
   .glide { position: absolute; left: 0; right: 0; top: 0; height: 0; border: 2.5px solid var(--plum-2); border-radius: 18px; pointer-events: none;
     opacity: 0; transition: transform .3s cubic-bezier(.16,1,.3,1), height .3s cubic-bezier(.16,1,.3,1); }
   .picker.ready .glide { opacity: 1; }
-  .waitlist { text-align: center; max-width: 620px; }
-  .waitlist-lede { color: var(--soft); font-size: 17px; line-height: 1.55; margin: 12px auto 22px; }
-  .waitlist-form { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; }
-  .waitlist-form input { flex: 1 1 240px; min-height: 48px; padding: 0 18px; border-radius: 999px; border: 1.5px solid var(--line);
-    background: var(--card); color: var(--ink); font: inherit; font-size: 16px; }
-  .waitlist-form input:focus-visible { outline: 3px solid var(--coral); outline-offset: 2px; }
-  .waitlist-form .btn-main { background: var(--coral); color: #1A0E12; border: 0; cursor: pointer; }
-  .waitlist-msg { min-height: 1.4em; margin: 12px 0 0; font-weight: 600; }
-  .waitlist-msg.ok { color: var(--mint); } .waitlist-msg.err { color: var(--link); }
-  .waitlist-form input[aria-invalid="true"] { border-color: var(--link); }
-  .trap { position: absolute; left: -10000px; width: 1px; height: 1px; overflow: hidden; }
+  .btn-soon { color: var(--on-plum-soft); border: 1.5px dashed rgba(251,247,243,.32); cursor: default; }
   .soon-line { margin: 14px 6px 4px; text-align: center; color: var(--soft); font-size: 15px; }
   .js .plan .panel:not(.on) { display: none; }
   .panel + .panel { margin-top: 26px; } .js .panel + .panel { margin-top: 0; }
@@ -365,10 +355,12 @@
         <h1 class="rise"><span>The scale jumps.</span> <span class="calm">Your trend doesn’t.</span></h1>
         <p class="lede rise">Tidemark is a weight tracker for iPhone that reads your weigh-ins properly: a trend one odd day can’t drag, an honest weekly rate, and a plan to hold it against.</p>
         <div class="ctas rise">
-          <a class="btn btn-main" href="#waitlist">Join the waitlist</a>
+          <!-- The build keeps one of these: the App Store link once the repository variable APP_LIVE is true, "coming soon" until then -->
+          <!--LIVE--><a class="btn btn-main" href="https://apps.apple.com/gb/app/id6822237050">Download on the App Store</a><!--/LIVE-->
+          <!--SOON--><span class="btn btn-soon">Coming soon to the App Store</span><!--/SOON-->
           <a class="btn btn-line" href="#plus">See Free and Plus</a>
         </div>
-        <p class="proof rise">Coming soon to iPhone, Android later · No account · Nothing leaves your phone</p>
+        <p class="proof rise"><!--LIVE-->For iPhone, Android later<!--/LIVE--><!--SOON-->iPhone first, Android later<!--/SOON--> · No account · Nothing leaves your phone</p>
       </div>
 
       <div class="fan" id="fan">
@@ -507,25 +499,6 @@
   </section>
 
 
-  <section id="waitlist">
-    <div class="wrap waitlist">
-      <p class="kicker">Coming soon to iPhone</p>
-      <h2>Be first to know when it’s out</h2>
-      <p class="waitlist-lede">One email on launch day, with the launch price: £11.99 for your first year of Plus instead of £19.99. Nothing else, and you can unsubscribe in one tap.</p>
-      <!-- data-endpoint: https://buttondown.com/api/emails/embed-subscribe/USERNAME once the Buttondown list exists -->
-      <form class="waitlist-form" id="waitlist-form" novalidate data-endpoint="" method="post" target="_blank">
-        <input type="hidden" name="embed" value="1">
-        <label class="sr" for="wl-email">Email address</label>
-        <input id="wl-email" name="email" type="email" autocomplete="email" inputmode="email" placeholder="you@example.com" required maxlength="254" aria-describedby="waitlist-msg">
-        <!-- Spam trap: hidden from people and screen readers, and has no name, so it's never sent. Bots that fill it are ignored. -->
-        <div class="trap" aria-hidden="true"><label>Leave this empty <input id="wl-trap" type="text" tabindex="-1" autocomplete="off"></label></div>
-        <button class="btn btn-main" type="submit">Join the waitlist</button>
-      </form>
-      <p class="waitlist-msg" id="waitlist-msg" role="status" aria-live="polite"></p>
-      <p class="fine">Your email is used only to tell you when Tidemark launches, then deleted. It never reaches the app. See <a href="#privacy">the privacy policy</a>.</p>
-    </div>
-  </section>
-
   <section id="plus">
     <div class="wrap">
       <p class="kicker">Free and Plus</p>
@@ -549,7 +522,7 @@
             <label class="row"><input type="radio" name="plan" value="lifetime">
               <span class="row-text"><span class="row-name">Lifetime</span><span class="row-price"><b>£49.99</b> once, no subscription</span></span><span class="dot" aria-hidden="true"></span></label>
           </fieldset>
-          <p class="soon-line">Coming soon to iPhone. Plus is bought in the app, through Apple.</p>
+          <p class="soon-line"><!--LIVE--><a href="https://apps.apple.com/gb/app/id6822237050">Get Tidemark on the App Store</a>.<!--/LIVE--><!--SOON-->Coming soon to iPhone.<!--/SOON--> Plus is bought in the app, through Apple.</p>
         </form>
 
         <div class="plan" aria-live="polite">
@@ -931,59 +904,6 @@
     });
   }, { threshold: 0.5 }).observe(v);
 })();
-</script>
-<script>
-  // Waitlist. With Buttondown connected (data-endpoint: its embed-subscribe URL) the address goes straight to it,
-  // Buttondown sends the confirmation email (double opt-in, its main defence against fake sign-ups), and this page moves
-  // on to thanks.html. Until then, the person's own mail app opens with a ready-made email to us, so nothing is
-  // collected by this page itself. Spam: a hidden trap field, a minimum time on the page, and one sign-up per visit.
-  (function () {
-    var form = document.getElementById('waitlist-form'), msg = document.getElementById('waitlist-msg');
-    if (!form) return;
-    var input = form.email, trap = document.getElementById('wl-trap'), opened = Date.now(), sent = false;
-    var TYPOS = { 'gmial.com': 'gmail.com', 'gmai.com': 'gmail.com', 'gmail.co': 'gmail.com', 'gmail.co.uk': 'gmail.com',
-                  'hotmial.com': 'hotmail.com', 'hotmail.co': 'hotmail.co.uk', 'hotmai.co.uk': 'hotmail.co.uk',
-                  'outlok.com': 'outlook.com', 'icloud.co': 'icloud.com', 'iclod.com': 'icloud.com', 'yahoo.co': 'yahoo.co.uk' };
-    var say = function (text, ok) {
-      msg.textContent = text; msg.className = 'waitlist-msg ' + (ok ? 'ok' : 'err');
-      input.setAttribute('aria-invalid', ok ? 'false' : 'true');
-    };
-    // Why an address can't be used, in plain words, or '' when it can
-    function problem(email) {
-      if (!email) return 'Please enter your email address.';
-      if (email.length > 254) return 'That email address is too long.';
-      if (/\s/.test(email)) return 'Email addresses can’t contain spaces.';
-      var at = email.lastIndexOf('@');
-      if (at < 1) return 'Your email address needs an @, like you@example.com.';
-      var domain = email.slice(at + 1).toLowerCase();
-      if (!/^[a-z0-9-]+(\.[a-z0-9-]+)*\.[a-z]{2,}$/.test(domain) || domain.indexOf('..') >= 0) return 'The part after the @ doesn’t look right.';
-      if (TYPOS[domain]) return 'Did you mean ' + email.slice(0, at + 1) + TYPOS[domain] + '? Fix it and try again.';
-      return '';
-    }
-    input.addEventListener('input', function () { if (input.getAttribute('aria-invalid') === 'true' && !problem(input.value.trim())) { msg.textContent = ''; input.removeAttribute('aria-invalid'); } });
-    form.addEventListener('submit', function (e) {
-      e.preventDefault();
-      if (sent) return;
-      var email = input.value.trim(), why = problem(email);
-      if (why) { say(why, false); input.focus(); return; }
-      // A filled trap or a sign-up within two seconds of the page opening is a bot: look done, send nothing
-      if (trap.value || Date.now() - opened < 2000) { sent = true; say('Thanks, you’re nearly on the list.', true); return; }
-      sent = true;
-      var endpoint = form.getAttribute('data-endpoint');
-      if (!endpoint) {
-        location.href = 'mailto:yameen@ysbdesigns.uk?subject=' + encodeURIComponent('Tidemark waitlist')
-          + '&body=' + encodeURIComponent('Please tell me when Tidemark launches: ' + email);
-        say('Your email app should open with a message ready. Press send and you’re on the list.', true);
-        return;
-      }
-      // Buttondown takes a plain form post (no background request). It opens in a new tab, where Buttondown can ask
-      // for any check it wants, and this tab moves on to the thank-you page.
-      form.action = endpoint;
-      HTMLFormElement.prototype.submit.call(form);
-      say('Nearly done: check your inbox and tap the confirmation link.', true);
-      setTimeout(function () { location.href = 'thanks.html'; }, 600);
-    });
-  })();
 </script>
 </body>
 </html>

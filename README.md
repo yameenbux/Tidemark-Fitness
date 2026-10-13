@@ -429,9 +429,11 @@ In App Store Connect, once the developer account is approved:
 5. **Fill in the App Store ID** (App Information → Apple ID) as `APP_STORE_ID`
    in `mobile/src/support.ts`, so Settings can link to the review page. *Done:
    6822237050.*
-6. **Answer the export-compliance questions.** Builds with password-protected
-   backups declare their own encryption, and selling in France needs a French
-   encryption declaration. `mobile/COMPLIANCE.md` has the steps.
+6. **Answer the export-compliance questions** for each build in TestFlight
+   ("Missing Compliance"). The build makes no claim in its Info.plist, because
+   claiming non-exempt encryption without an approved code is rejected at upload
+   (ITMS-90592). Keep France out of the app's availability until a French
+   encryption declaration is approved. `mobile/COMPLIANCE.md` has the answers.
 7. **Build and test**: `npx eas-cli build -p ios --profile production` (Xcode
    26.4 or later), then `npx eas-cli submit -p ios --latest`. Then run the
    device test plan in `mobile/README.md`: buy, restore and cancel in

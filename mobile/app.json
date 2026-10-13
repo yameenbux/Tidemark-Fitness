@@ -16,9 +16,6 @@
         "tinted": "./assets/icon-tinted.png"
       },
       "buildNumber": "1",
-      "config": {
-        "usesNonExemptEncryption": false
-      },
       "privacyManifests": {
         "NSPrivacyTracking": false,
         "NSPrivacyTrackingDomains": [],

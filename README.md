@@ -219,7 +219,7 @@ Tidemark's code. That's also the minimum for EAS builds.
 
 | Address | What it is |
 | :--- | :--- |
-| `tidemark.ysbdesigns.uk/` | The website: what Tidemark does, the launch waitlist, Free and Plus, support questions and the full privacy policy. Use it as the App Store **Support URL** |
+| `tidemark.ysbdesigns.uk/` | The website: what Tidemark does, Free and Plus, support questions and the full privacy policy. Use it as the App Store **Support URL** |
 | `/privacy.html` | The privacy policy on its own, which every app build links to. This is the page that has to stay up |
 | `/app/` | The web build of the app: the owner's private test tool, not a product. `noindex`, and not linked from anywhere. Plus is locked behind the owner's passphrase (below) |
 | `/classic/` | The original tracker, kept for the owner's old data. `noindex` |
@@ -238,18 +238,21 @@ there. It's a lock against casual use, not real security: the web build runs in
 the browser and could be patched. To change the passphrase, put the SHA-256 of
 the new one in `pages.yml`.
 
-**The waitlist** is the "Join the waitlist" section of `site/index.html`. Until
-a Buttondown list is connected, it opens the visitor's own mail app with a ready
-email to the support address. To connect it, set the form's `data-endpoint` to
-`https://buttondown.com/api/emails/embed-subscribe/<username>` and add Buttondown
-to the waitlist paragraph of `privacy.html`.
+**Launch day: set the repository variable `APP_LIVE` to `true`** (Settings →
+Secrets and variables → Actions → Variables), then re-run the "Deploy website to
+Pages" workflow. Until then the site says "Coming soon to the App Store". Once
+it's set, the same places link to the App Store listing
+(`apps.apple.com/gb/app/id6822237050`). Both versions are in `site/index.html`
+between `<!--LIVE-->` and `<!--SOON-->` markers, and the build keeps one. Only set
+it once the app is live, or the button opens a missing page. The site has no
+waitlist or sign-up form, so it collects nothing.
 
 **Settings → Pages → Source** must be **GitHub Actions**, not a branch.
 The website is `site/index.html`. The privacy section is filled in from
 `privacy.html` when the site is built, so edit the policy in one place only.
 
-The other pages are `site/terms.html`, `site/thanks.html` (where the waitlist
-form lands) and `site/404.html`, styled by `site/page.css`. The build
+The other pages are `site/terms.html` and `site/404.html`, styled by
+`site/page.css`. The build
 (`mobile/scripts/pages-site.js`) adds each page's title, description, link
 preview, favicons and breadcrumbs for search results, and writes `robots.txt`
 and `sitemap.xml`. Then `mobile/scripts/check-site.js` checks every internal link
@@ -264,7 +267,7 @@ outside links too.
 its code. The next deploy adds the counter to the public pages and changes the
 privacy policy's website paragraph to say what it records. GoatCounter sets no
 cookies and stores nothing on the device, so the site still needs no cookie
-banner. Sign-ups show up as visits to `/thanks.html`.
+banner. Visits to `/404.html` show up too, which points to broken links.
 
 **HTTPS:** tick **Settings → Pages → Enforce HTTPS**. The pages also upgrade
 themselves if they're ever opened over http.
@@ -301,7 +304,7 @@ installs packages, gets read access only, and every action is pinned to a commit
 | Automatic backups | `mobile/src/core/autoBackup.ts`, `mobile/src/useAutoBackup.ts`, `mobile/modules/backup-folder/` |
 | When to ask for an App Store rating | `mobile/src/core/reviewAsk.ts` |
 | The web preview lock | `mobile/src/core/previewKey.ts`, `mobile/src/features.ts` |
-| The website and the waitlist | `site/index.html` |
+| The website | `site/index.html`, `site/terms.html`, `mobile/scripts/pages-site.js` |
 | What's saved, and how it's checked on load | `mobile/src/core/storage.ts` |
 | Backup files, plain and protected | `mobile/src/core/backup.ts`, `mobile/src/core/vault.ts` |
 | Reminders | `mobile/src/reminders.ts` |

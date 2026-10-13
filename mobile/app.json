@@ -2,6 +2,7 @@
   "expo": {
     "name": "Tidemark",
     "slug": "tidemark",
+    "owner": "ysb-designs",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -79,6 +80,11 @@
     "web": {
       "favicon": "./assets/favicon.png",
       "name": "Tidemark"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "7c97b432-fb09-4801-9064-f583462ea06c"
+      }
     },
     "plugins": [
       "./plugins/withoutPushEntitlement.js",

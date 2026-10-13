@@ -174,7 +174,7 @@ outside service it talks to.
 
 ```
 mobile/          the app: Expo, React Native, TypeScript (start here)
-site/            the website: tidemark.ysbdesigns.uk (home, terms, thanks, 404 pages and their files)
+site/            the website: tidemark.ysbdesigns.uk (home, terms and 404 pages and their files)
 .github/         CI, the iOS build, the website deploy and the uptime check
 index.html       the original single-file web tracker, served at /classic
 privacy.html     the privacy policy, served at /privacy.html

@@ -400,7 +400,7 @@ only the person who reported it.
 | A crash, or a number that's wrong | **Us** | The error screen's *Email the error to support* |
 | Anything about a purchase or a refund | **Apple** | Purchases go through Apple; we can't see or refund them |
 
-The support address is `yameen@ysbdesigns.uk`. It is in `mobile/src/support.ts`
+The support address is `support@ysbdesigns.uk`. It is in `mobile/src/support.ts`
 and the privacy policy, and nowhere else needs changing if it moves.
 
 ---

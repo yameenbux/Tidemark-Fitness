@@ -373,9 +373,9 @@ screen deciding who gets sent to the App Store. Unhappy people get
 **Send feedback or get help** in Settings → About, and **Rate Tidemark** sits
 next to it for anyone who wants to.
 
-The **Rate Tidemark** row needs the app's App Store ID. Fill in `APP_STORE_ID`
-in `mobile/src/support.ts` once the app exists in App Store Connect; until then
-the row is hidden.
+The **Rate Tidemark** row uses the app's App Store ID, `APP_STORE_ID` in
+`mobile/src/support.ts` (6822237050, from App Store Connect → App Information →
+Apple ID). With no ID the row is hidden.
 
 ---
 
@@ -417,13 +417,15 @@ In App Store Connect, once the developer account is approved:
 1. **Business → Agreements**: sign the Paid Apps agreement and add bank and tax
    details. Without it, purchases fail even in testing.
 2. **Apply for the Small Business Program** (15% commission instead of 30%).
-3. **Create the app** with bundle ID `com.yameenbux.tidemark`.
+3. **Create the app** with bundle ID `com.yameenbux.tidemark`. *Done: it's listed
+   as "Tidemark: Weight Trend Tracker" (the Home Screen still says Tidemark).*
 4. **Create the products**: a subscription group with
    `com.yameenbux.tidemark.plus.monthly` (£2.99, no trial) and `.yearly` (£19.99,
    with the launch offer above, then a one-week free trial), and the
    non-consumable `com.yameenbux.tidemark.plus.lifetime` (£49.99).
 5. **Fill in the App Store ID** (App Information → Apple ID) as `APP_STORE_ID`
-   in `mobile/src/support.ts`, so Settings can link to the review page.
+   in `mobile/src/support.ts`, so Settings can link to the review page. *Done:
+   6822237050.*
 6. **Answer the export-compliance questions.** Builds with password-protected
    backups declare their own encryption, and selling in France needs a French
    encryption declaration. `mobile/COMPLIANCE.md` has the steps.

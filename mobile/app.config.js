@@ -1,12 +1,14 @@
 // app.json holds the config. This adjusts it per build:
 // - the web base path when a build asks for it (the GitHub Pages deploy serves the app from a sub-path);
-// - the export-compliance flag, which follows whether this build carries Tidemark's own encryption. Password-protected
-//   backups use XChaCha20-Poly1305 and scrypt from @noble, standard algorithms that aren't Apple's, so Apple's table
-//   says such a build is not "exempt": it needs a French encryption declaration if it's sold in France. A build made
-//   with EXPO_PUBLIC_DISABLE_PROTECTED_BACKUPS=1 has no encryption of its own and is exempt.
+// - export compliance: the build makes no encryption claim in its Info.plist. Password-protected backups use
+//   XChaCha20-Poly1305 and scrypt from @noble, standard algorithms that aren't Apple's. Declaring that up front
+//   (ITSAppUsesNonExemptEncryption = YES) makes App Store Connect reject the upload (ITMS-90592) unless the build also
+//   carries the code from approved encryption documentation (ITSEncryptionExportComplianceCode). Leaving the key out
+//   lets the upload through; App Store Connect then asks the encryption questions for each build in TestFlight.
+//   Once those answers give a result (or documentation is approved), set the key here. See COMPLIANCE.md.
 module.exports = ({ config }) => {
-  const ownCrypto = process.env.EXPO_PUBLIC_DISABLE_PROTECTED_BACKUPS !== '1';
-  const ios = { ...config.ios, config: { ...config.ios?.config, usesNonExemptEncryption: ownCrypto } };
+  const { usesNonExemptEncryption, ...iosConfig } = config.ios?.config ?? {};
+  const ios = { ...config.ios, config: iosConfig };
   const out = { ...config, ios };
   return process.env.WEB_BASE_URL ? { ...out, experiments: { ...config.experiments, baseUrl: process.env.WEB_BASE_URL } } : out;
 };

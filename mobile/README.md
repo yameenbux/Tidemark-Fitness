@@ -127,10 +127,11 @@ What each protection is, and what it isn't:
 
 ## Device test plan
 
-Nothing native has run on an iPhone yet. CI now compiles it all for the simulator (`.github/workflows/ios-build.yml`),
-which proves it builds, not that it works. Run this once on a real iPhone in a **development build** (`npx eas-cli build
--p ios --profile development`), then the purchase steps again in **TestFlight** with a sandbox tester. Each line says
-what should happen; anything else is a bug.
+CI compiles everything for the simulator (`.github/workflows/ios-build.yml`), which proves it builds, not that it works.
+Run this once on a real iPhone from **TestFlight**. Purchases there use Apple's sandbox, so nothing is charged. The
+Expo project is `@ysbdesigns/tidemark`, and signing is managed by EAS for the YSB Ventures team. To make a build:
+`npx --yes eas-cli@latest build -p ios --profile production`, then `npx --yes eas-cli@latest submit -p ios --latest`.
+Each line says what should happen; anything else is a bug.
 
 **Data and locking**
 1. Log weigh-ins on three days, force-quit, reopen: all three are there.

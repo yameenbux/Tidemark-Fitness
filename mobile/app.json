@@ -2,6 +2,7 @@
   "expo": {
     "name": "Tidemark",
     "slug": "tidemark",
+    "owner": "ysbdesigns",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -15,9 +16,6 @@
         "tinted": "./assets/icon-tinted.png"
       },
       "buildNumber": "1",
-      "config": {
-        "usesNonExemptEncryption": false
-      },
       "privacyManifests": {
         "NSPrivacyTracking": false,
         "NSPrivacyTrackingDomains": [],
@@ -79,6 +77,11 @@
     "web": {
       "favicon": "./assets/favicon.png",
       "name": "Tidemark"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "a3dd6871-f9ec-4a28-9e20-535ea6d706b5"
+      }
     },
     "plugins": [
       "./plugins/withoutPushEntitlement.js",

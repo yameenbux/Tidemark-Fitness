@@ -2,6 +2,16 @@
 <html lang="en-GB">
 <head>
 <meta charset="utf-8">
+<!--
+  The home page of tidemark.ysbdesigns.uk. Styles are in site.css and behaviour in site.js; the page reads fine without either.
+  Sections, in order:  .hero (headline over a live chart, canvas)  →  #inside (sticky phone, one chapter per real app screen)
+  →  #film  →  #plus (plan picker)  →  #privacy (statement, then the policy card)  →  #support (FAQ)  →  footer.
+  Build contracts, kept by mobile/scripts/pages-site.js (see the README, "Deploying the website"):
+  - LIVE and SOON marker pairs (HTML comments around the App Store buttons): the build keeps one side (repository variable APP_LIVE).
+  - The PRIVACY slot in #privacy is filled from privacy.html, so the policy has one source.
+  - The uptime check (.github/workflows/site-check.yml) looks for the words "Questions people ask".
+  - Screens in shots/ are real app screenshots. Only show what's in the app today.
+-->
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Tidemark · The weight tracker that reads the trend</title>
 <meta name="color-scheme" content="dark">
@@ -11,498 +21,81 @@
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="preload" href="fonts/SpaceGrotesk_700Bold.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="fonts/HankenGrotesk_400Regular.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="site.css">
 <!-- HTTPS only: GitHub Pages redirects http to https when "Enforce HTTPS" is ticked; this covers anything that slips through -->
 <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
 <script>if (location.protocol === 'http:' && !/^(localhost|127\.0\.0\.1)$/.test(location.hostname)) location.replace('https:' + location.href.slice(5));</script>
 <script>document.documentElement.classList.add('js')</script>
-<style>
-  /* Everything on this page is served from this site: no font services and no cookies. The only outside request is the
-     optional cookie-free visit counter, added at build time when it's switched on (see mobile/scripts/pages-site.js). */
-  @font-face { font-family: 'Space Grotesk'; font-weight: 700; font-display: swap; src: url(fonts/SpaceGrotesk_700Bold.woff2) format('woff2'), url(fonts/SpaceGrotesk_700Bold.ttf) format('truetype'); }
-  @font-face { font-family: 'Space Grotesk'; font-weight: 500; font-display: swap; src: url(fonts/SpaceGrotesk_500Medium.woff2) format('woff2'), url(fonts/SpaceGrotesk_500Medium.ttf) format('truetype'); }
-  @font-face { font-family: 'Hanken Grotesk'; font-weight: 400; font-display: swap; src: url(fonts/HankenGrotesk_400Regular.woff2) format('woff2'), url(fonts/HankenGrotesk_400Regular.ttf) format('truetype'); }
-  @font-face { font-family: 'Hanken Grotesk'; font-weight: 600; font-display: swap; src: url(fonts/HankenGrotesk_600SemiBold.woff2) format('woff2'), url(fonts/HankenGrotesk_600SemiBold.ttf) format('truetype'); }
-
-  /* The app's own palette (mobile/src/theme.ts). The hero is plum in both themes, like the app icon. */
-  /* One dark palette: the page sits on Tidemark's plum night, whatever the device is set to */
-  :root {
-    color-scheme: dark;
-    --paper: #120E1C; --card: rgba(28,25,37,.78); --line: rgba(242,238,246,.10); --ink: #F2EEF6; --soft: #B3ABBE;
-    --plum: #2A1E45; --plum-2: #4B2E73; --plum-deep: #1E1533; --on-plum: #FBF7F3; --on-plum-soft: #C9BFD6;
-    --coral: #FF6B5E; --amber: #FFA24B; --link: #FF8D7D; --mint: #5BD6A9; --mint-bg: rgba(21,41,31,.85); --panel: #2A2240;
-  }
-
-  * { box-sizing: border-box; }
-  html { scroll-behavior: smooth; }
-  @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
-  body { margin: 0; background: var(--paper); color: var(--ink); position: relative; font: 17px/1.6 'Hanken Grotesk', -apple-system, system-ui, sans-serif; }
-  a { color: var(--link); text-underline-offset: 3px; }
-  :focus-visible { outline: 3px solid var(--amber); outline-offset: 3px; border-radius: 6px; }
-  .wrap { max-width: 1080px; margin: 0 auto; padding: 0 20px; }
-  .skip { position: absolute; left: -9999px; }
-  .skip:focus { left: 16px; top: 16px; background: var(--card); padding: 8px 14px; z-index: 10; }
-  h1, h2, h3 { font-family: 'Space Grotesk', -apple-system, system-ui, sans-serif; font-weight: 700; letter-spacing: -0.02em; line-height: 1.12; margin: 0; }
-  h2 { font-size: clamp(30px, 4.4vw, 44px); }
-  h3 { font-size: 21px; letter-spacing: -0.01em; }
-  /* Every section opens on a centred head, in line with the intro */
-  .wrap > .kicker, .wrap > h2, .promise-head { text-align: center; }
-  .wrap > h2, .promise-head h2 { text-wrap: balance; max-width: 22ch; margin-left: auto; margin-right: auto; }
-  .kicker { font: 500 14px/1.4 'Space Grotesk', sans-serif; letter-spacing: 0.08em; text-transform: uppercase; color: var(--link); margin: 0 0 12px; }
-  section { padding: 88px 0; }
-  section + section { border-top: 1px solid var(--line); }
-
-  /* The film: 25 seconds, no sound. It plays while it's on screen and stops when it isn't; with reduced motion
-     it waits for a tap. The button is there because anything that moves for longer than five seconds needs a pause. */
-  .film { position: relative; max-width: 960px; margin: 36px auto 0; border-radius: 22px; overflow: hidden; background: #F3EDE6;
-    box-shadow: 0 30px 70px -30px rgba(42,30,69,.55), 0 0 0 1px var(--line); aspect-ratio: 16 / 9; }
-  .film video { display: block; width: 100%; height: 100%; object-fit: cover; }
-  .film-btn { position: absolute; right: 14px; bottom: 14px; width: 44px; height: 44px; border-radius: 50%; border: 0; cursor: pointer;
-    display: grid; place-items: center; background: rgba(42,30,69,.78); color: #FBF7F3; backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); }
-  .film-btn:hover { background: rgba(42,30,69,.92); }
-  .film-btn:focus-visible { outline: 3px solid var(--coral); outline-offset: 3px; }
-  .film-btn svg { width: 18px; height: 18px; }
-  .film-note { text-align: center; margin: 14px 0 0; font-size: 14px; color: var(--soft); }
-  @media (max-width: 760px) { .film { border-radius: 14px; margin-top: 28px; } .film-btn { right: 10px; bottom: 10px; } }
-
-  /* Header and hero: one plum block, like opening the app */
-  .top { color: var(--on-plum); }
-
-  /* The page background (after "Elegant dark pattern", in Tidemark colours): a plum glow from the top left, five
-     skewed streaks of amber fading to nothing, a fine grain and a faint dot grid. It's fixed, so the content moves
-     over it like the tide over sand. Everything is CSS: no images to load. */
-  .bg { position: fixed; inset: 0; z-index: -1; overflow: hidden; background: var(--paper); pointer-events: none; }
-  .bg-glow { position: absolute; inset: 0;
-    background: radial-gradient(100% 100% at 0% 0%, #3A2A5E 0%, #120E1C 100%);
-    -webkit-mask: radial-gradient(125% 100% at 0% 0%, #000 0%, rgba(0,0,0,.22) 88%, transparent 100%);
-            mask: radial-gradient(125% 100% at 0% 0%, #000 0%, rgba(0,0,0,.22) 88%, transparent 100%); }
-  .bg-streak { position: absolute; inset: 0; opacity: .16; transform: skewX(45deg);
-    background: linear-gradient(#FFA24B 0%, rgba(255,107,94,.35) 45%, transparent 100%); }
-  .bg-streak:nth-child(1) { -webkit-mask: linear-gradient(90deg, transparent 0%, #000 20%, transparent 36%, #000 55%, rgba(0,0,0,.13) 67%, #000 78%, transparent 97%);
-                                    mask: linear-gradient(90deg, transparent 0%, #000 20%, transparent 36%, #000 55%, rgba(0,0,0,.13) 67%, #000 78%, transparent 97%); }
-  .bg-streak:nth-child(2) { -webkit-mask: linear-gradient(90deg, transparent 11%, #000 25%, rgba(0,0,0,.55) 41%, rgba(0,0,0,.13) 67%, #000 78%, transparent 97%);
-                                    mask: linear-gradient(90deg, transparent 11%, #000 25%, rgba(0,0,0,.55) 41%, rgba(0,0,0,.13) 67%, #000 78%, transparent 97%); }
-  .bg-streak:nth-child(3) { -webkit-mask: linear-gradient(90deg, transparent 9%, #000 20%, rgba(0,0,0,.55) 28%, rgba(0,0,0,.42) 40%, #000 48%, rgba(0,0,0,.27) 54%, rgba(0,0,0,.13) 78%, #000 88%, transparent 97%);
-                                    mask: linear-gradient(90deg, transparent 9%, #000 20%, rgba(0,0,0,.55) 28%, rgba(0,0,0,.42) 40%, #000 48%, rgba(0,0,0,.27) 54%, rgba(0,0,0,.13) 78%, #000 88%, transparent 97%); }
-  .bg-streak:nth-child(4) { -webkit-mask: linear-gradient(90deg, transparent 0%, #000 17%, rgba(0,0,0,.55) 26%, #000 35%, transparent 47%, rgba(0,0,0,.13) 69%, #000 79%, transparent 97%);
-                                    mask: linear-gradient(90deg, transparent 0%, #000 17%, rgba(0,0,0,.55) 26%, #000 35%, transparent 47%, rgba(0,0,0,.13) 69%, #000 79%, transparent 97%); }
-  .bg-streak:nth-child(5) { -webkit-mask: linear-gradient(90deg, transparent 0%, #000 20%, rgba(0,0,0,.55) 27%, #000 42%, transparent 48%, rgba(0,0,0,.13) 67%, #000 74%, #000 82%, rgba(0,0,0,.47) 88%, transparent 97%);
-                                    mask: linear-gradient(90deg, transparent 0%, #000 20%, rgba(0,0,0,.55) 27%, #000 42%, transparent 48%, rgba(0,0,0,.13) 67%, #000 74%, #000 82%, rgba(0,0,0,.47) 88%, transparent 97%); }
-  .bg-grain { position: absolute; inset: 0; opacity: .06; background-size: 150px;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='150' height='150'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 .6 0'/%3E%3C/filter%3E%3Crect width='150' height='150' filter='url(%23n)'/%3E%3C/svg%3E"); }
-  .bg-dots { position: absolute; inset: 0; opacity: .14; background-size: 20px 20px;
-    background-image: radial-gradient(circle at 1px 1px, rgba(251,247,243,.6) 1px, transparent 0); }
-  nav { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 20px 0; }
-  .brand { display: flex; align-items: center; gap: 12px; color: inherit; text-decoration: none; font: 700 22px 'Space Grotesk', sans-serif; letter-spacing: -0.01em; }
-  .brand img { width: 40px; height: 40px; border-radius: 10px; }
-  nav ul { display: flex; gap: 22px; list-style: none; margin: 0; padding: 0; }
-  nav ul a { color: var(--on-plum-soft); text-decoration: none; font-weight: 600; font-size: 15px; }
-  nav ul a:hover { color: var(--on-plum); }
-  @media (max-width: 640px) { nav ul { display: none; } }
-
-  /* The intro: centred words over a fan of three app screens that spread out as the page opens (after "Hero 10") */
-  .hero { text-align: center; padding: 40px 0 0; }
-  .hero-copy { max-width: 780px; margin: 0 auto; display: flex; flex-direction: column; align-items: center; }
-  .hero h1 { font-size: clamp(42px, 7.4vw, 82px); letter-spacing: -0.035em; line-height: 1.04; text-wrap: balance; }
-  .hero h1 span { display: block; }
-  .hero h1 .calm { background: linear-gradient(90deg, var(--amber), var(--coral)); -webkit-background-clip: text; background-clip: text; color: transparent; }
-  .hero p.lede { font-size: 19px; color: var(--on-plum-soft); max-width: 34em; margin: 22px 0 30px; text-wrap: balance; }
-  .ctas { display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; }
-  .btn { display: inline-flex; align-items: center; min-height: 48px; padding: 0 22px; border-radius: 999px; font-weight: 600; font-size: 16px;
-    text-decoration: none; transition: transform .2s, background-color .2s; }
-  .btn:active { transform: scale(.97); }
-  .btn-main { background: var(--on-plum); color: var(--plum); }
-  .btn-main:hover { background: #FFFFFF; }
-  .btn-line { color: var(--on-plum); border: 1.5px solid rgba(251,247,243,.32); }
-  .btn-line:hover { background: rgba(251,247,243,.08); }
-  .proof { margin: 18px 0 0; font-size: 14px; font-weight: 600; color: var(--on-plum-soft); letter-spacing: .01em; }
-
-  /* Three phones: the iPhone Duo opened out, an iPhone, and an Android phone. The frames are drawn into the images
-     (transparent around them), so the shadow follows the phone's outline rather than a box. */
-  .fan { display: flex; justify-content: center; align-items: flex-start; max-width: 920px; margin: 64px auto 0; padding: 0 8px; }
-  .card { margin: 0; flex: none; filter: drop-shadow(0 26px 34px rgba(10,6,20,.55)); }
-  .card img { display: block; width: 100%; height: auto; }
-  .card-l { width: 41%; z-index: 1; margin-right: -6%; transform: translateY(36px) rotate(-4deg); }
-  .card-c { width: 30%; z-index: 2; transform: translateY(-6px); }
-  .card-r { width: 27%; z-index: 1; margin-left: -5%; transform: translateY(36px) rotate(6deg); }
-
-  .points { list-style: none; margin: 72px auto 0; padding: 0 0 88px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 28px; text-align: center; }
-  .points .h3 { font-size: 20px; letter-spacing: -0.01em; color: var(--on-plum); }
-  .points p { margin: 6px 0 0; color: var(--on-plum-soft); font-size: 16px; }
-  @media (max-width: 760px) {
-    .hero p.lede { font-size: 17px; }
-    .fan { margin-top: 48px; }
-    .points { grid-template-columns: 1fr; gap: 20px; margin-top: 56px; padding-bottom: 64px; }
-  }
-
-  /* Opening: the words rise in one after another, then the outer screens slide out from behind the middle one.
-     Only when the script has run and nobody has asked for less motion; otherwise everything is simply there. */
-  @media (prefers-reduced-motion: no-preference) {
-    .js .rise { opacity: 0; transform: translateY(12px); filter: blur(6px); transition: opacity .5s, transform .5s cubic-bezier(.22,1,.36,1), filter .5s; }
-    .js .rise:nth-child(2) { transition-delay: .08s; } .js .rise:nth-child(3) { transition-delay: .16s; } .js .rise:nth-child(4) { transition-delay: .24s; }
-    .js .fan { opacity: 0; transform: translateY(12px); filter: blur(6px); transition: opacity .5s .35s, transform .5s .35s cubic-bezier(.22,1,.36,1), filter .5s .35s; }
-    .js .card { transition: transform .6s cubic-bezier(.22,1,.36,1); }
-    .js .card-l { transform: translateX(40%) translateY(36px) rotate(-4deg); transition-delay: .5s; }
-    .js .card-r { transform: translateX(-48%) translateY(36px) rotate(6deg); transition-delay: .6s; }
-    .js .opened .rise, .js .opened .fan { opacity: 1; transform: none; filter: none; }
-    .js .opened .card-l { transform: translateY(36px) rotate(-4deg); }
-    .js .opened .card-r { transform: translateY(36px) rotate(6deg); }
-  }
-
-  /* Free and Plus */
-  .plans { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 20px; margin-top: 40px; align-items: start; }
-  .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
-  /* The plan picker: a billing switch, three plans and an outline that glides to the chosen one (after "Pricing Interaction") */
-  .picker { background: var(--card); border: 1px solid var(--line); border-radius: 30px; padding: 12px; margin: 0; }
-  .picker fieldset { border: 0; margin: 0; padding: 0; min-width: 0; }
-  .period { position: relative; display: grid; grid-template-columns: 1fr 1fr; background: var(--paper); border-radius: 999px; padding: 5px; }
-  .period label { position: relative; z-index: 1; text-align: center; padding: 9px 0; border-radius: 999px; cursor: pointer; font-weight: 600; }
-  .period input, .rows input { position: absolute; opacity: 0; pointer-events: none; }
-  .period label:has(input:focus-visible), .row:has(input:focus-visible) { outline: 3px solid var(--amber); outline-offset: 2px; }
-  .thumb { position: absolute; top: 5px; bottom: 5px; left: 5px; width: calc(50% - 5px); border-radius: 999px; background: var(--card);
-    box-shadow: 0 1px 3px rgba(36,27,51,.18); transition: transform .3s cubic-bezier(.16,1,.3,1); }
-  .picker.yearly .thumb { transform: translateX(100%); }
-  .rows { position: relative; display: flex; flex-direction: column; gap: 12px; margin-top: 12px !important; }
-  .row { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; padding: 16px 18px; border: 1.5px solid var(--line);
-    border-radius: 18px; cursor: pointer; }
-  .row-text { display: flex; flex-direction: column; gap: 2px; }
-  .row-name { font: 700 20px/1.2 'Space Grotesk', sans-serif; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
-  .row-price { color: var(--soft); }
-  .row-price b { color: var(--ink); font-weight: 600; font-variant-numeric: tabular-nums; }
-  .badge:empty { display: none; }
-  .badge { font: 600 12.5px 'Hanken Grotesk', sans-serif; padding: 3px 8px; border-radius: 8px; background: var(--mint-bg); color: var(--mint); }
-  .dot { flex: none; width: 22px; height: 22px; margin-top: 3px; border-radius: 50%; border: 2px solid var(--soft); display: grid; place-items: center;
-    transition: border-color .3s; }
-  .dot::after { content: ''; width: 10px; height: 10px; border-radius: 50%; background: var(--plum-2); opacity: 0; transition: opacity .3s; }
-  .row:has(input:checked) .dot { border-color: var(--plum-2); }
-  .row:has(input:checked) .dot::after { opacity: 1; }
-  .glide { position: absolute; left: 0; right: 0; top: 0; height: 0; border: 2.5px solid var(--plum-2); border-radius: 18px; pointer-events: none;
-    opacity: 0; transition: transform .3s cubic-bezier(.16,1,.3,1), height .3s cubic-bezier(.16,1,.3,1); }
-  .picker.ready .glide { opacity: 1; }
-  .btn-soon { color: var(--on-plum-soft); border: 1.5px dashed rgba(251,247,243,.32); cursor: default; }
-  .soon-line { margin: 14px 6px 4px; text-align: center; color: var(--soft); font-size: 15px; }
-  .js .plan .panel:not(.on) { display: none; }
-  .panel + .panel { margin-top: 26px; } .js .panel + .panel { margin-top: 0; }
-      .dot::after { background: #C2A8F2; } .row:has(input:checked) .dot, .glide { border-color: #C2A8F2; }
-    .thumb { background: #2A2633; box-shadow: none; }
-  
-  @media (prefers-reduced-motion: reduce) { .thumb, .glide, .dot, .dot::after { transition: none; } }
-  @media (max-width: 760px) { .plans { grid-template-columns: 1fr; } }
-  .plan { background: var(--card); border: 1px solid var(--line); border-radius: 24px; padding: 30px; }
-  
-  .plan .price { font: 700 34px/1 'Space Grotesk', sans-serif; letter-spacing: -0.02em; margin: 14px 0 4px; }
-  .plan .price small { font: 400 16px 'Hanken Grotesk', sans-serif; color: var(--soft); letter-spacing: 0; }
-  .plan ul { list-style: none; padding: 0; margin: 22px 0 0; }
-  .plan li { padding: 9px 0 9px 32px; border-top: 1px solid var(--line); position: relative; }
-  .plan li::before { content: ''; position: absolute; left: 2px; top: 13px; width: 18px; height: 18px; border-radius: 50%; background: var(--panel) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23C2A8F2' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m5.5 12.5 4.2 4.2 8.8-9.2'/%3E%3C/svg%3E") center / 12px no-repeat; }
-  .fine { color: var(--soft); font-size: 15px; margin-top: 18px; }
-  .plans + .fine { text-align: center; max-width: 720px; margin-left: auto; margin-right: auto; }
-
-  /* Privacy promise */
-  .promise dl { margin: 40px 0 0; display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; text-align: center; }
-  @media (max-width: 860px) { .promise dl { grid-template-columns: 1fr; max-width: 520px; margin-left: auto; margin-right: auto; } }
-  .promise dl div { background: var(--mint-bg); border-radius: 18px; padding: 22px 22px; }
-  .promise dt { font: 700 18px 'Space Grotesk', sans-serif; color: var(--mint); }
-  .promise dd { margin: 4px 0 0; }
-
-  /* Support */
-  /* FAQ: a search box and rounded cards that open one at a time (after the "FAQ Pro" component, in plain HTML) */
-  .faq { margin: 36px auto 0; max-width: 760px; display: flex; flex-direction: column; gap: 12px; }
-  .faq-search { position: relative; }
-  .faq-search input { width: 100%; height: 52px; border-radius: 999px; border: 1px solid var(--line); background: var(--card); color: var(--ink);
-    padding: 0 48px 0 22px; font: 400 16px 'Hanken Grotesk', sans-serif; appearance: none; -webkit-appearance: none; }
-  .faq-search input::placeholder { color: var(--soft); }
-  .faq-search input::-webkit-search-cancel-button, .faq-search input::-webkit-search-decoration { -webkit-appearance: none; }
-  .faq-search input:focus-visible { outline: 3px solid var(--amber); outline-offset: 2px; }
-  .faq-clear { position: absolute; top: 50%; right: 10px; transform: translateY(-50%); width: 32px; height: 32px; border: 0; border-radius: 50%;
-    background: transparent; color: var(--soft); cursor: pointer; display: none; align-items: center; justify-content: center; }
-  .faq-clear:hover { background: var(--panel); color: var(--ink); }
-  .faq-search.has-query .faq-clear { display: inline-flex; }
-  .faq-list { display: flex; flex-direction: column; gap: 10px; }
-  .faq details { border-radius: 18px; background: var(--card); border: 1px solid var(--line); overflow: hidden; }
-  .faq details[hidden] { display: none; }
-  .faq summary { cursor: pointer; list-style: none; display: flex; align-items: flex-start; justify-content: space-between; gap: 16px;
-    padding: 18px 22px; font: 600 17px/1.45 'Hanken Grotesk', sans-serif; letter-spacing: -0.01em; border-radius: 18px; }
-  .faq summary::-webkit-details-marker { display: none; }
-  .faq summary:focus-visible { outline: 3px solid var(--amber); outline-offset: -3px; }
-  .faq summary svg { flex: none; width: 18px; height: 18px; margin-top: 4px; color: var(--soft); transition: transform .35s cubic-bezier(.16,1,.3,1); }
-  .faq details[open] summary svg { transform: rotate(180deg); }
-  .faq .answer { overflow: hidden; }
-  .faq .answer p { margin: 0; padding: 0 22px 20px; color: var(--soft); max-width: 40em; }
-  .faq mark { background: rgba(255,162,75,.35); color: inherit; border-radius: 3px; padding: 0 2px; }
-  .faq-empty { color: var(--soft); text-align: center; padding: 28px 8px; margin: 0; }
-  @media (prefers-reduced-motion: reduce) { .faq summary svg { transition: none; } }
-  .contact { margin: 36px auto 0; background: var(--card); border: 1px solid var(--line); border-radius: 20px; padding: 24px 26px; max-width: 760px; text-align: center; }
-  .contact p { margin: 4px 0 0; }
-
-  /* The policy as a card of sections that open one at a time */
-  .policy { max-width: 800px; }   /* 760px of card inside the 20px gutters, the same column as the FAQ */
-  .policy-card { background: var(--card); border: 1px solid var(--line); border-radius: 22px; overflow: hidden; }
-  .policy-head { padding: 24px 24px 20px; border-bottom: 1px solid var(--line); }
-  .policy-head h2 { font-size: 24px; letter-spacing: -0.01em; }
-  .policy-head .muted { color: var(--soft); margin: 6px 0 0; font-size: 15px; }
-  .policy-head .box { background: var(--mint-bg); border-radius: 14px; padding: 14px 16px; margin-top: 16px; font-size: 16px; }
-  .policy-card details + details { border-top: 1px solid var(--line); }
-  .policy-card summary { cursor: pointer; list-style: none; display: flex; align-items: center; justify-content: space-between; gap: 16px;
-    padding: 16px 24px; font: 600 16.5px/1.4 'Hanken Grotesk', sans-serif; }
-  .policy-card summary::-webkit-details-marker { display: none; }
-  .policy-card summary:hover span { color: var(--link); }
-  .policy-card summary:focus-visible { outline: 3px solid var(--amber); outline-offset: -3px; }
-  .policy-card summary svg { flex: none; width: 16px; height: 16px; color: var(--soft); transition: transform .25s cubic-bezier(.16,1,.3,1); }
-  .policy-card details[open] summary svg { transform: rotate(180deg); }
-  .policy-panel { padding: 0 24px 18px; color: var(--soft); font-size: 16px; }
-  .policy-panel p { margin: 0 0 10px; } .policy-panel p:last-child { margin-bottom: 0; }
-  .policy-panel ul { margin: 0; padding-left: 20px; } .policy-panel li { margin: 6px 0; }
-  .policy-note { color: var(--soft); font-size: 15px; margin-top: 14px; text-align: center; }
-  @media (prefers-reduced-motion: reduce) { .policy-card summary svg { transition: none; } }
-
-  /* Beyond the app: reminders (in the first release, more choices coming), widgets and Apple Watch (coming soon).
-     The pictures are drawn here, not screenshots, and each card says plainly what's available and what isn't yet. */
-  /* Inside Tidemark: a pile of cards, the app's screens and what's coming. Throw the top card (drag and let go) and it
-     flies off and slides back in at the bottom; the arrows, arrow keys and autoplay do the same. Without the script
-     the cards simply sit in a grid with their captions. */
-  .deck { position: relative; margin: 36px auto 0; display: flex; flex-direction: column; align-items: center; gap: 22px; outline: none; }
-  .deck:focus-visible { outline: 2px solid var(--amber); outline-offset: 10px; border-radius: 28px; }
-  .deck-pile { position: relative; width: min(84vw, 380px); aspect-ratio: 4 / 5; margin-top: 52px; touch-action: pan-y; }
-  .deck-card { position: absolute; inset: 0; margin: 0; border-radius: 28px; overflow: hidden; display: flex; align-items: center; justify-content: center;
-    box-shadow: 0 1px 2px rgba(0,0,0,.25), 0 36px 64px -30px rgba(0,0,0,.8), inset 0 0 0 1px rgba(251,247,243,.09);
-    transition: transform .6s cubic-bezier(.2,.8,.2,1), opacity .4s ease, filter .4s ease; will-change: transform; user-select: none; -webkit-user-select: none; }
-  .deck-card[data-top="1"] { cursor: grab; }
-  .deck-card[data-mode="drag"] { cursor: grabbing; transition: none; }
-  .deck-card[data-mode="fly"] { transition: transform .45s cubic-bezier(.3,.5,.3,1), opacity .45s ease; }
-  .deck-card[data-mode="snap"] { transition: none; }
-  .tone-plum { background: radial-gradient(120% 90% at 50% 0%, #4B2E73 0%, #2A1E45 55%, #1E1533 100%); }
-  .tone-deep { background: radial-gradient(110% 80% at 30% 0%, #3A2A5E 0%, #17121F 72%); }
-  .tone-warm { background: linear-gradient(160deg, #FF8D7D 0%, #FFA24B 26%, #4B2E73 74%, #2A1E45 100%); }
-  .deck-screen { width: 64%; aspect-ratio: 480 / 780; border-radius: 22px; overflow: hidden; background: #FBF7F3;
-    box-shadow: 0 0 0 6px #0B0910, 0 0 0 7px rgba(251,247,243,.14), 0 24px 40px -18px rgba(0,0,0,.7); }
-  .deck-screen img { display: block; width: 100%; height: 100%; object-fit: cover; pointer-events: none; }
-  .deck-art { display: grid; place-items: center; width: 100%; height: 100%; padding: 24px; }
-  .deck-art .rem { transform: scale(1.12); }
-  .deck-watch { display: block; width: 84%; height: auto; filter: drop-shadow(0 24px 30px rgba(0,0,0,.5)); pointer-events: none; }
-  .deck-card figcaption { display: none; }
-  .deck-meta { display: flex; align-items: center; gap: 16px; width: min(100%, 560px); }
-  .deck-cap { flex: 1; min-width: 0; text-align: center; min-height: 128px; }
-  .deck-cap > * { animation: deck-in .55s cubic-bezier(.2,.8,.2,1) both; }
-  .deck-cap h3 { font-size: 22px; letter-spacing: -0.01em; margin-top: 2px; animation-delay: .03s; }
-  .deck-cap p { margin: 6px 0 0; color: var(--soft); font-size: 16px; animation-delay: .06s; }
-  .deck-cap .tag { margin-bottom: 8px; }
-  @keyframes deck-in { from { transform: translateY(10px); opacity: 0; } to { transform: none; opacity: 1; } }
-  .deck-btn { appearance: none; flex: none; width: 46px; height: 46px; border-radius: 50%; border: 1px solid var(--line); background: rgba(28,25,37,.6);
-    color: var(--ink); display: grid; place-items: center; cursor: pointer; transition: background .2s, color .2s; }
-  .deck-btn:hover { background: var(--ink); color: var(--paper); }
-  .deck-btn:focus-visible, .deck-play:focus-visible { outline: 2px solid var(--amber); outline-offset: 2px; }
-  .deck-foot { display: flex; align-items: center; gap: 14px; margin-top: -6px; }
-  .deck-count { font: 500 13px/1 'Space Grotesk', sans-serif; letter-spacing: .14em; color: var(--soft); }
-  .deck-count b { color: var(--ink); font-weight: 500; }
-  .deck-play { appearance: none; border: 1px solid var(--line); background: none; color: var(--soft); border-radius: 999px; padding: 6px 12px;
-    font: 600 12px/1 'Hanken Grotesk', sans-serif; letter-spacing: .04em; text-transform: uppercase; cursor: pointer; }
-  .deck-play:hover { color: var(--ink); }
-  .deck-sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; margin: 0; }
-  @media (prefers-reduced-motion: reduce) { .deck-card, .deck-card[data-mode="fly"] { transition: opacity .3s ease; } .deck-cap > * { animation: none; } }
-  /* No script: a plain grid of cards with their captions */
-  html:not(.js) .deck-pile { width: 100%; aspect-ratio: auto; margin-top: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 20px; }
-  html:not(.js) .deck-card { position: relative; flex-direction: column; aspect-ratio: auto; padding: 24px 18px 20px; gap: 18px; }
-  html:not(.js) .deck-screen { width: 70%; }
-  html:not(.js) .deck-card figcaption { display: block; text-align: center; }
-  html:not(.js) .deck-card figcaption p { color: var(--on-plum-soft); margin: 6px 0 0; }
-  html:not(.js) .deck-meta, html:not(.js) .deck-foot, html:not(.js) .js-only { display: none; }
-  .tag { display: inline-block; font: 600 12px/1 'Hanken Grotesk', sans-serif; letter-spacing: .04em; text-transform: uppercase;
-    padding: 6px 10px; border-radius: 999px; margin-bottom: 12px; }
-  .tag-now { color: var(--mint); background: var(--mint-bg); }
-  .tag-soon { color: var(--amber); border: 1px solid rgba(255,162,75,.45); }
-  .tag-plus { color: var(--on-plum); background: rgba(255,107,94,.22); border: 1px solid rgba(255,107,94,.5); }
-  .extras-note { text-align: center; color: var(--soft); font-size: 15px; max-width: 720px; margin: 22px auto 0; }
-
-  /* Reminder choices */
-  .rem { width: 100%; max-width: 280px; background: rgba(18,14,28,.72); border: 1px solid var(--line); border-radius: 18px; padding: 6px 0; }
-  .rem-row { display: flex; align-items: center; gap: 10px; padding: 7px 14px; font-size: 13.5px; line-height: 1.3; }
-  .rem-row + .rem-row { border-top: 1px solid var(--line); }
-  .rem-row b { font-weight: 600; color: var(--ink); }
-  .rem-row small { display: block; color: var(--soft); font-size: 12px; margin-top: 1px; }
-  .rem-row .grow { flex: 1; min-width: 0; }
-  .mini-tag { font: 600 10px/1 'Hanken Grotesk', sans-serif; letter-spacing: .05em; text-transform: uppercase; color: var(--amber); margin-left: 6px; vertical-align: 1px; }
-  .mini-tag.plus { color: #C2A8F2; }
-  .sw { flex: none; width: 38px; height: 23px; border-radius: 999px; background: rgba(242,238,246,.18); position: relative; }
-  .sw::after { content: ''; position: absolute; top: 3px; left: 3px; width: 17px; height: 17px; border-radius: 50%; background: #F2EEF6; }
-  .sw.on { background: var(--mint); } .sw.on::after { left: 18px; }
-
-
-  footer { background: rgba(18,14,28,.6); border-top: 1px solid var(--line); color: var(--on-plum-soft); padding: 40px 0; font-size: 15px; }
-  footer .wrap { display: flex; flex-direction: column; align-items: center; gap: 6px; text-align: center; }
-  footer a { color: var(--on-plum); }
-  footer p { margin: 0; }
-</style>
+<script src="site.js" defer></script>
 </head>
 <body>
-<div class="bg" aria-hidden="true"><div class="bg-glow"><div class="bg-streak"></div><div class="bg-streak"></div><div class="bg-streak"></div><div class="bg-streak"></div><div class="bg-streak"></div></div><div class="bg-grain"></div><div class="bg-dots"></div></div>
+<div class="bg" aria-hidden="true"><div class="bg-glow"></div><div class="bg-streak"></div><div class="bg-streak"></div><div class="bg-grain"></div></div>
 <a class="skip" href="#main">Skip to content</a>
 
-<header class="top">
+<header class="nav">
   <div class="wrap">
+    <a class="brand" href="#"><img src="icon.png" alt="" width="34" height="34">Tidemark</a>
     <nav aria-label="Main">
-      <a class="brand" href="#"><img src="icon.png" alt="" width="40" height="40">Tidemark</a>
       <ul>
-        <li><a href="#how">How it works</a></li>
-        <li><a href="#extras">Inside Tidemark</a></li>
+        <li><a href="#inside">Inside</a></li>
         <li><a href="#plus">Free and Plus</a></li>
         <li><a href="#support">Support</a></li>
         <li><a href="#privacy">Privacy</a></li>
       </ul>
     </nav>
-
-    <div class="hero">
-      <div class="hero-copy">
-        <h1 class="rise"><span>The scale jumps.</span> <span class="calm">Your trend doesn’t.</span></h1>
-        <p class="lede rise">Tidemark is a weight tracker for iPhone that reads your weigh-ins properly: a trend one odd day can’t drag, an honest weekly rate, and a plan to hold it against.</p>
-        <div class="ctas rise">
-          <!-- The build keeps one of these: the App Store link once the repository variable APP_LIVE is true, "coming soon" until then -->
-          <!--LIVE--><a class="btn btn-main" href="https://apps.apple.com/gb/app/id6822237050">Download on the App Store</a><!--/LIVE-->
-          <!--SOON--><span class="btn btn-soon">Coming soon to the App Store</span><!--/SOON-->
-          <a class="btn btn-line" href="#plus">See Free and Plus</a>
-        </div>
-        <p class="proof rise"><!--LIVE-->For iPhone, Android later<!--/LIVE--><!--SOON-->iPhone first, Android later<!--/SOON--> · No account · Nothing leaves your phone</p>
-      </div>
-
-      <div class="fan" id="fan">
-        <figure class="card card-l"><img src="shots/device-duo.webp" width="880" height="1239" alt="An iPhone Duo opened out, showing the Trend screen: trend weight 88.2 kg, losing 0.5 kg a week, and a note that the last weigh-in dropped 0.8 kg while the trend moved 0.1 kg." decoding="async"></figure>
-        <figure class="card card-c"><img src="shots/device-iphone.webp" width="600" height="1260" alt="An iPhone showing the Today screen: trend weight 88.2 kg with the last 30 days charted behind it, daily weigh-ins as dots around a calm trend line and the plan dashed, then progress from 92 towards 84 kg, on track, and today’s list with the weigh-in ticked off." decoding="async"></figure>
-        <figure class="card card-r"><img src="shots/device-android.webp" width="600" height="1302" alt="An Android phone showing the Habits screen: this week’s ticks for water, steps and sleep." decoding="async"></figure>
-      </div>
-
-      <ul class="points" id="how">
-        <li><h2 class="h3">Today, at a glance</h2><p>Your trend weight, how far you’ve come and this week’s pace. Logging opens on your last weight, so it’s a tap or two.</p></li>
-        <li><h2 class="h3">The trend, against your plan</h2><p>See the line you’re on and the one you planned. When a weigh-in jumps, it tells you why that’s normal.</p></li>
-        <li><h2 class="h3">Habits, without streaks</h2><p>Tick off the few things that help, like water or a walk. A missed day is one empty square, not a reset to zero.</p></li>
-      </ul>
-    </div>
   </div>
 </header>
 
 <main id="main">
+  <section class="hero">
+    <canvas aria-hidden="true"></canvas>
+    <div class="hero-copy wrap">
+      <h1 class="rise"><span class="jump">The scale jumps.</span> <span class="calm">Your trend doesn’t.</span></h1>
+      <div class="ctas rise">
+        <!--LIVE--><a class="btn btn-main" href="https://apps.apple.com/gb/app/id6822237050">Download on the App Store</a><!--/LIVE-->
+        <!--SOON--><span class="btn btn-soon">Coming soon to the App Store</span><!--/SOON-->
+        <a class="btn btn-line" href="#plus">See Free and Plus</a>
+      </div>
+    </div>
+  </section>
+
+  <section id="inside" class="story" aria-label="Inside Tidemark">
+    <div class="stage">
+      <div class="phone">
+        <div class="screens">
+          <img src="shots/today-600.webp" srcset="shots/today-600.webp 600w, shots/today.webp 1179w" sizes="(max-width: 899px) 270px, 350px" width="1179" height="2556" decoding="async" alt="Tidemark’s Today screen: trend weight 89.2 kg with the last 30 days charted, weigh-ins as dots around a calm trend line and the plan dashed, 5.8 kg lost, 9.2 kg to go, on track.">
+          <img src="shots/trend-600.webp" srcset="shots/trend-600.webp 600w, shots/trend.webp 1179w" sizes="(max-width: 899px) 270px, 350px" width="1179" height="2556" decoding="async" loading="lazy" alt="The Trend screen: trend weight 89.2 kg, 0.5 kg a week on average over 28 days, the date this pace reaches 80 kg, and the change over 3, 7, 14 and 30 days.">
+          <img src="shots/dose-600.webp" srcset="shots/dose-600.webp 600w, shots/dose.webp 1179w" sizes="(max-width: 899px) 270px, 350px" width="1179" height="2556" decoding="async" loading="lazy" alt="The weekly injection and your trend: 3.6 kg down at 7.5 mg and 2.3 kg at 5 mg, with nausea, tiredness and constipation charted through the week after each dose.">
+          <img src="shots/hide-600.webp" srcset="shots/hide-600.webp 600w, shots/hide.webp 1179w" sizes="(max-width: 899px) 270px, 350px" width="1179" height="2556" decoding="async" loading="lazy" alt="Today with Hide my weight on: “Trending down”, 0.5 kg a week, the chart with no scale, and the start and goal weights hidden.">
+          <img src="shots/habits-600.webp" srcset="shots/habits-600.webp 600w, shots/habits.webp 1179w" sizes="(max-width: 899px) 270px, 350px" width="1179" height="2556" decoding="async" loading="lazy" alt="The Habits screen: the last 30 days of water, steps and workouts as squares, filled on the days they were done, with the share of days for each.">
+        </div>
+      </div>
+    </div>
+    <ol class="chapters">
+      <li class="chapter" data-shot="0" data-glow="#4B2E73"><div class="wrap"><h2>Your trend, <em>not today’s number.</em></h2></div></li>
+      <li class="chapter" data-shot="1" data-glow="#7A3550"><div class="wrap"><h2>An honest <em>weekly rate.</em></h2></div></li>
+      <li class="chapter" data-shot="2" data-glow="#5B2E73"><div class="wrap"><h2>Your trend at <em>every dose.</em> <span class="pill">Plus</span></h2></div></li>
+      <li class="chapter" data-shot="3" data-glow="#3A2A5E"><div class="wrap"><h2>Hide the number. <em>Keep the progress.</em></h2></div></li>
+      <li class="chapter" data-shot="4" data-glow="#24564A"><div class="wrap"><h2>Consistency, <em>not streaks.</em></h2></div></li>
+    </ol>
+  </section>
+
   <section id="film">
+    <h2 class="sr">Tidemark in 25 seconds</h2>
     <div class="wrap">
-      <p class="kicker">Tidemark in 25 seconds</p>
-      <h2>Watch the scale jump and the trend hold.</h2>
-      <div class="film">
+      <div class="film reveal">
         <video id="film-video" muted playsinline loop preload="none" controls poster="film/poster.webp" width="1920" height="1080"
           aria-label="A 25-second film with no sound. A morning weigh-in of 87.6 kg jumps about on a chart while the trend line stays calm. Then the app: Today with the trend weight and a 30-day chart, logging a weight in two taps, habits as ticks without streaks, and privacy settings with Face ID lock and backups. It ends on the Tidemark logo: the scale jumps, your trend doesn’t.">
           <source src="film/tidemark.webm" type="video/webm">
           <source src="film/tidemark.mp4" type="video/mp4">
         </video>
       </div>
-      <p class="film-note" id="film-note">No sound. Plays while it’s on screen.</p>
     </div>
   </section>
-
-  <section id="extras">
-    <div class="wrap">
-      <p class="kicker">Inside Tidemark</p>
-      <h2>Everything it does, one card at a time.</h2>
-      <div class="deck" id="deck" role="region" aria-roledescription="carousel" aria-label="What Tidemark does" tabindex="0">
-        <div class="deck-pile">
-          <figure class="deck-card tone-plum">
-            <div class="deck-screen"><img src="shots/deck/today.webp" width="480" height="780" alt="The Today screen: trend weight 89.2 kg with the last 30 days charted behind it, progress from 95 towards 80 kg, on track, and today’s list starting with the weigh-in ticked off." loading="lazy" decoding="async" draggable="false"></div>
-            <figcaption><span class="tag tag-now">In the app</span><h3>Today, at a glance</h3><p>Your trend with the last 30 days behind it: the weigh-ins jump about, the trend stays calm, and the plan is the dashed line.</p></figcaption>
-          </figure>
-          <figure class="deck-card tone-deep">
-            <div class="deck-screen"><img src="shots/deck/trend.webp" width="480" height="780" alt="The Trend screen: the scale went up 1.3 kg but the trend moved 0.1 kg, and because a salty meal and alcohol were noted the day before, it says that often shows up as water weight." loading="lazy" decoding="async" draggable="false"></div>
-            <figcaption><span class="tag tag-now">In the app</span><h3>The scale jumps. The trend doesn’t.</h3><p>When one weigh-in jumps 1.3 kg, Tidemark shows the trend barely moved, and if you noted a salty meal the night before, it says so.</p></figcaption>
-          </figure>
-          <figure class="deck-card tone-warm">
-            <div class="deck-screen"><img src="shots/deck/progress.webp" width="480" height="780" alt="A progress chart of weigh-ins, the trend line and the target line over twelve weeks." loading="lazy" decoding="async" draggable="false"></div>
-            <figcaption><span class="tag tag-now">In the app</span><h3>Held against your plan</h3><p>Weigh-ins, your trend and your target on one chart, over four weeks, twelve weeks or the whole plan.</p></figcaption>
-          </figure>
-          <figure class="deck-card tone-plum">
-            <div class="deck-screen"><img src="shots/deck/log.webp" width="480" height="780" alt="The Log weight sheet opened on the last weight, with tags to pick such as salty meal, alcohol, travel, period and poor sleep, and a note." loading="lazy" decoding="async" draggable="false"></div>
-            <figcaption><span class="tag tag-now">In the app</span><h3>Logged in a tap or two</h3><p>It opens on your last weight. Nudge it, save, and if you like tag the day: a salty meal, travel, your period. The chart marks it.</p></figcaption>
-          </figure>
-          <figure class="deck-card tone-deep">
-            <div class="deck-screen"><img src="shots/deck/habits.webp" width="480" height="780" alt="The Habits screen with this week’s ticks for water, steps and sleep." loading="lazy" decoding="async" draggable="false"></div>
-            <figcaption><span class="tag tag-now">In the app</span><h3>Habits, without streaks</h3><p>Tick off the few things that help, like water, steps or sleep. A missed day is one empty square, not a reset to zero.</p></figcaption>
-          </figure>
-          <figure class="deck-card tone-warm">
-            <div class="deck-screen"><img src="shots/deck/consistency.webp" width="480" height="780" alt="Thirty-day grids for water, steps and sleep with how often each was done." loading="lazy" decoding="async" draggable="false"></div>
-            <figcaption><span class="tag tag-now">In the app</span><h3>Consistency you can see</h3><p>Thirty days of each habit at a glance, and how often it really happens, not how long a streak lasted.</p></figcaption>
-          </figure>
-          <figure class="deck-card tone-plum">
-            <div class="deck-screen"><img src="shots/deck/hide.webp" width="480" height="780" alt="Today with hide my weight on: the headline says Trending down, 0.5 kg this week, and progress shows as 39% of the way, with no weight shown." loading="lazy" decoding="async" draggable="false"></div>
-            <figcaption><span class="tag tag-now">In the app</span><h3>See the trend, not the number</h3><p>Turn on Hide my weight and Tidemark shows which way you’re heading and by how much. Never the weight itself.</p></figcaption>
-          </figure>
-          <figure class="deck-card tone-deep">
-            <div class="deck-screen"><img src="shots/deck/holding.webp" width="480" height="780" alt="The Trend tab at the goal, offering to switch to holding within 1.5 kg of the goal weight." loading="lazy" decoding="async" draggable="false"></div>
-            <figcaption><span class="tag tag-now">In the app</span><h3>Reached your goal? Hold it.</h3><p>Switch to holding and Tidemark keeps you within a range. It stops counting further loss as progress.</p></figcaption>
-          </figure>
-          <figure class="deck-card tone-warm">
-            <div class="deck-screen"><img src="shots/deck/dose.webp" width="480" height="780" alt="A dose card: a weekly injection due today, 7.5 mg, with injection sites to choose and the one used longest ago picked." loading="lazy" decoding="async" draggable="false"></div>
-            <figcaption><span class="tag tag-now">In the app</span><h3>Your medication, logged</h3><p>Mark a weekly GLP-1 dose as taken and get a dose-day reminder, free. With Plus, rotate injection sites and note how you feel.</p></figcaption>
-          </figure>
-          <figure class="deck-card tone-plum">
-            <div class="deck-screen"><img src="shots/deck/effects.webp" width="480" height="780" alt="How the trend moved at each dose of a weekly injection, and side effects through the week: nausea most often the day after a dose." loading="lazy" decoding="async" draggable="false"></div>
-            <figcaption><span class="tag tag-plus">Plus</span><h3>Your trend at each dose</h3><p>See how your trend moved on each dose, and when side effects tend to show up after one.</p></figcaption>
-          </figure>
-          <figure class="deck-card tone-deep">
-            <div class="deck-screen"><img src="shots/deck/report.webp" width="480" height="780" alt="A weight report: a 12-week trend chart, a weekly table, doses and injection sites, side effects and notes." loading="lazy" decoding="async" draggable="false"></div>
-            <figcaption><span class="tag tag-plus">Plus</span><h3>A report for your doctor</h3><p>Twelve weeks of trend, doses, side effects and notes as a PDF, made on your phone and shared only where you choose.</p></figcaption>
-          </figure>
-          <figure class="deck-card tone-warm">
-            <div class="deck-screen"><img src="shots/deck/protein.webp" width="480" height="780" alt="A protein card: 60 of 120 grams today, with buttons to add 10, 20 or 30 grams." loading="lazy" decoding="async" draggable="false"></div>
-            <figcaption><span class="tag tag-plus">Plus</span><h3>A protein minimum</h3><p>A daily floor of 1.2 to 1.6 g per kg, to help keep muscle while you lose fat. Add it in quick taps.</p></figcaption>
-          </figure>
-          <figure class="deck-card tone-plum">
-            <div class="deck-art"><div class="rem" role="img" aria-label="Reminder settings: weigh-in at 7:30 on, dose day at 9:00 on, and, coming soon, a habit nudge, a weekly summary on Sundays and quiet days at weekends.">
-              <div class="rem-row"><div class="grow"><b>Weigh-in</b><small>Every day at 7:30</small></div><span class="sw on"></span></div>
-              <div class="rem-row"><div class="grow"><b>Dose day</b><span class="mini-tag plus">Plus</span><small>At 9:00, without naming it</small></div><span class="sw on"></span></div>
-              <div class="rem-row"><div class="grow"><b>Habit nudge</b><span class="mini-tag">Soon</span><small>At 20:00</small></div><span class="sw"></span></div>
-              <div class="rem-row"><div class="grow"><b>Weekly summary</b><span class="mini-tag">Soon</span><small>Sundays at 18:00</small></div><span class="sw on"></span></div>
-              <div class="rem-row"><div class="grow"><b>Quiet days</b><span class="mini-tag">Soon</span><small>Saturday and Sunday</small></div><span class="sw on"></span></div>
-            </div></div>
-            <figcaption><span class="tag tag-now">In the app</span><h3>Only the reminders you want</h3><p>Your weigh-in reminder comes when you choose and stays quiet on days you’ve already weighed in. Coming soon: pick which reminders you get, with quiet days.</p></figcaption>
-          </figure>
-          <figure class="deck-card tone-deep">
-            <div class="deck-screen"><img src="shots/deck/welcome.webp" width="480" height="780" alt="The welcome screen: a weight tracker that stays yours, with no account and no sign-up." loading="lazy" decoding="async" draggable="false"></div>
-            <figcaption><span class="tag tag-now">In the app</span><h3>No account. Nothing leaves your phone.</h3><p>Open it and start. There’s nothing to sign up for, and everything you enter stays on your iPhone.</p></figcaption>
-          </figure>
-          <figure class="deck-card tone-plum">
-            <div class="deck-screen"><img src="shots/deck/private.webp" width="480" height="780" alt="Settings with Face ID lock, backup export and spreadsheet export." loading="lazy" decoding="async" draggable="false"></div>
-            <figcaption><span class="tag tag-now">In the app</span><h3>Locked and backed up, by you</h3><p>Lock Tidemark with Face ID, export a backup or a spreadsheet whenever you like, or delete everything in one go.</p></figcaption>
-          </figure>
-          <figure class="deck-card tone-warm">
-            <div class="deck-screen"><img src="shots/deck/widgets-home.webp" width="480" height="780" alt="A Home Screen with a medium Tidemark widget showing the trend chart, a small progress dial widget at 4.2 kg to go, and a habits widget at 2 of 3." loading="lazy" decoding="async" draggable="false"></div>
-            <figcaption><span class="tag tag-soon">In testing</span><h3>Widgets for your Home Screen</h3><p>Your trend and its chart, how far you are from your goal, and today’s habits, without opening the app.</p></figcaption>
-          </figure>
-          <figure class="deck-card tone-deep">
-            <div class="deck-screen"><img src="shots/deck/widgets-lock.webp" width="480" height="780" alt="A Lock Screen with Tidemark’s trend above the clock, a progress dial, the weekly rate, a trend card and a weigh-in reminder." loading="lazy" decoding="async" draggable="false"></div>
-            <figcaption><span class="tag tag-soon">In testing</span><h3>And your Lock Screen</h3><p>The trend above the clock, a progress dial and your weekly rate, in the wallpaper’s own tint.</p></figcaption>
-          </figure>
-          <figure class="deck-card tone-plum">
-            <div class="deck-art"><img class="deck-watch" src="shots/deck/watch-app.webp" width="420" height="433" alt="Apple Watch showing a trend weight of 88.2 kg, down 0.5 kg a week, a small chart and a Log weight button." loading="lazy" decoding="async" draggable="false"></div>
-            <figcaption><span class="tag tag-soon">Coming soon</span><h3>Apple Watch</h3><p>Glance at your trend and log a weigh-in from your wrist, turning the Digital Crown to set the weight.</p></figcaption>
-          </figure>
-          <figure class="deck-card tone-deep">
-            <div class="deck-art"><img class="deck-watch" src="shots/deck/watch-face.webp" width="420" height="433" alt="An Apple Watch face with Tidemark complications: a progress dial, the trend at 88.2 kg, kilos lost, habit consistency and the next reminder." loading="lazy" decoding="async" draggable="false"></div>
-            <figcaption><span class="tag tag-soon">Coming soon</span><h3>On your watch face</h3><p>Complications for your trend, your progress, your habits and your next reminder.</p></figcaption>
-          </figure>
-        </div>
-        <div class="deck-meta">
-          <button type="button" class="deck-btn" data-go="prev" aria-label="Previous card"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M10 3 5 8l5 5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
-          <div class="deck-cap" aria-hidden="true"></div>
-          <button type="button" class="deck-btn" data-go="next" aria-label="Next card"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="m6 3 5 5-5 5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
-        </div>
-        <div class="deck-foot">
-          <span class="deck-count" aria-hidden="true"><b>01</b> / 19</span>
-          <button type="button" class="deck-play" aria-pressed="false">Pause</button>
-        </div>
-        <p class="deck-sr" aria-live="polite"></p>
-      </div>
-      <p class="extras-note"><span class="js-only">Drag the top card away, or use the arrows. </span>Everything marked “In the app” is in the first release; cards marked “Plus” are part of Tidemark Plus. Widgets are built and being tested on iPhone; Apple Watch and the extra reminder choices are planned for an update. The widget and Watch pictures are designs, so the finished versions may differ. Reminders are set up on your iPhone itself, so nothing is sent to a server.</p>
-    </div>
-  </section>
-
 
   <section id="plus">
     <div class="wrap">
-      <p class="kicker">Free and Plus</p>
-      <h2>Free does the job. Plus adds the extras.</h2>
+      <h2 class="head reveal">Free does the job. Plus adds the extras.</h2>
       <div class="plans">
         <form class="picker" id="picker" aria-label="Choose a plan" onsubmit="return false">
           <fieldset class="period">
@@ -522,13 +115,15 @@
             <label class="row"><input type="radio" name="plan" value="lifetime">
               <span class="row-text"><span class="row-name">Lifetime</span><span class="row-price"><b>£49.99</b> once, no subscription</span></span><span class="dot" aria-hidden="true"></span></label>
           </fieldset>
-          <p class="soon-line"><!--LIVE--><a href="https://apps.apple.com/gb/app/id6822237050">Get Tidemark on the App Store</a>.<!--/LIVE--><!--SOON-->Coming soon to iPhone.<!--/SOON--> Plus is bought in the app, through Apple.</p>
+          <div class="get">
+            <!--LIVE--><a class="btn btn-main" href="https://apps.apple.com/gb/app/id6822237050">Download on the App Store</a><!--/LIVE-->
+            <!--SOON--><span class="btn btn-soon">Coming soon to the App Store</span><!--/SOON-->
+          </div>
         </form>
 
         <div class="plan" aria-live="polite">
           <div class="panel" data-plan="free">
             <h3>Free</h3>
-            <p class="fine" style="margin-top:6px">The whole core of Tidemark, for as long as you use it.</p>
             <ul>
               <li>Trend weight, weekly rate and your plan</li>
               <li>Chart, change table and full history</li>
@@ -545,7 +140,6 @@
           </div>
           <div class="panel" data-plan="plus">
             <h3>Plus</h3>
-            <p class="fine" style="margin-top:6px">Everything in Free, plus the extras. Monthly or yearly; cancel any time in your iPhone’s settings. Any free trial or introductory price is shown in the app before you pay.</p>
             <ul>
               <li>Your trend at each dose, injection-site rotation and side effects</li>
               <li>A PDF report for your doctor or nurse</li>
@@ -558,7 +152,6 @@
           </div>
           <div class="panel" data-plan="lifetime">
             <h3>Lifetime</h3>
-            <p class="fine" style="margin-top:6px">Everything in Plus, paid for once. No subscription, nothing to renew.</p>
             <ul>
               <li>Your trend at each dose, injection-site rotation and side effects</li>
               <li>A PDF report for your doctor or nurse</li>
@@ -571,28 +164,28 @@
           </div>
         </div>
       </div>
-      <p class="fine">UK prices. Plus is bought through Apple, and the App Store shows the price in your own currency. The yearly saving is against twelve months of monthly. Anything you enter in a Plus feature is kept if Plus ends, and comes back if you return.</p>
+      <p class="fine">UK prices, bought in the app through Apple. Plus renews until you cancel it in your iPhone’s Settings, and any trial or introductory price is shown before you pay. What you enter in Plus is kept if it ends.</p>
     </div>
   </section>
 
-  <section id="promise">
-    <div class="wrap promise">
-      <div class="promise-head">
-        <p class="kicker">Private by design</p>
-        <h2>Your weight is nobody’s business but yours.</h2>
-      </div>
-      <dl>
-        <div><dt>No account</dt><dd>There’s nothing to sign up for and no password to forget.</dd></div>
-        <div><dt>No server</dt><dd>Everything you enter is kept on your iPhone, encrypted by iOS while it’s locked.</dd></div>
-        <div><dt>Nothing collected</dt><dd>No analytics, no ads, no tracking. On the App Store, Tidemark’s privacy label is “Data Not Collected”.</dd></div>
-      </dl>
+  <section id="privacy">
+    <div class="wrap">
+      <h2 class="head reveal">Your weight is nobody’s business.</h2>
+      <ul class="facts reveal">
+        <li>No account</li>
+        <li>No server</li>
+        <li>Nothing collected</li>
+      </ul>
+    </div>
+    <div class="policy">
+<!-- PRIVACY: filled in from privacy.html by mobile/scripts/pages-site.js, so the policy has one source -->
+      <p class="policy-note"><a href="privacy.html">Read the whole policy on one page</a></p>
     </div>
   </section>
 
   <section id="support">
     <div class="wrap">
-      <p class="kicker">Support</p>
-      <h2>Questions people ask.</h2>
+      <h2 class="head reveal">Questions people ask.</h2>
       <div class="faq">
         <div class="faq-search">
           <input type="search" id="faq-q" placeholder="Search questions" aria-label="Search questions" aria-controls="faq-list" autocomplete="off">
@@ -634,20 +227,7 @@
         </div>
         <p class="faq-empty" role="status" hidden>No questions match that. Try another word, or email us below.</p>
       </div>
-      <div class="contact">
-        <h3>Still stuck?</h3>
-        <p>Email <a href="mailto:support@ysbdesigns.uk">support@ysbdesigns.uk</a>. You’ll hear back from the person who builds Tidemark.</p>
-      </div>
-    </div>
-  </section>
-
-  <section id="privacy" class="policy-section">
-    <div class="wrap policy">
-      <p class="kicker">Privacy policy</p>
-      <div class="policy-body">
-<!-- PRIVACY: filled in from privacy.html by mobile/scripts/pages-site.js, so the policy has one source -->
-      </div>
-      <p class="policy-note">Prefer it on one page? <a href="privacy.html">Read the whole policy</a>.</p>
+      <p class="contact">Still stuck? Email <a href="mailto:support@ysbdesigns.uk">support@ysbdesigns.uk</a></p>
     </div>
   </section>
 </main>
@@ -658,252 +238,5 @@
     <p><a href="privacy.html">Privacy policy</a> · <a href="terms.html">Terms</a> · <a href="mailto:support@ysbdesigns.uk">Support</a></p>
   </div>
 </footer>
-
-<script>
-  // Open the intro once the first frame has painted, so its rise and spread are seen
-  requestAnimationFrame(function () { requestAnimationFrame(function () { document.querySelector('.hero').classList.add('opened'); }); });
-</script>
-<script>
-  // FAQ: one answer open at a time, a gentle open and close, and a search that filters and highlights as you type.
-  // Works without this script too: the questions are plain <details> elements.
-  (function () {
-    var list = document.getElementById('faq-list'); if (!list) return;
-    var items = Array.prototype.slice.call(list.querySelectorAll('details'));
-    var input = document.getElementById('faq-q'), box = input.parentNode, clear = box.querySelector('.faq-clear');
-    var empty = list.parentNode.querySelector('.faq-empty');
-    var still = window.matchMedia('(prefers-reduced-motion: reduce)');
-    var EASE = 'cubic-bezier(.16,1,.3,1)';
-    var parts = items.map(function (d) {
-      var q = d.querySelector('summary span'), a = d.querySelector('.answer p');
-      return { d: d, q: q, a: a, qHtml: q.innerHTML, aHtml: a.innerHTML };   // our own markup, kept to undo highlighting
-    });
-
-    function animate(d, open) {
-      var panel = d.querySelector('.answer');
-      if (still.matches || !panel.animate) { d.open = open; return; }
-      if (open) d.open = true;
-      var h = panel.scrollHeight;
-      var anim = panel.animate(open ? [{ height: '0px', opacity: 0 }, { height: h + 'px', opacity: 1 }]
-                                    : [{ height: h + 'px', opacity: 1 }, { height: '0px', opacity: 0 }],
-                               { duration: open ? 420 : 260, easing: EASE });
-      if (!open) anim.onfinish = function () { d.open = false; };
-    }
-    function show(d) {
-      parts.forEach(function (p) { if (p.d !== d && p.d.open) animate(p.d, false); });
-      animate(d, true);
-    }
-    items.forEach(function (d) {
-      d.querySelector('summary').addEventListener('click', function (e) {
-        e.preventDefault();
-        if (d.open) animate(d, false); else show(d);
-      });
-    });
-
-    // Highlight by splitting text nodes, never by writing what was typed into the page as HTML
-    function mark(el, html, q) {
-      el.innerHTML = html;
-      if (!q) return;
-      var walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT), nodes = [], n;
-      while ((n = walker.nextNode())) nodes.push(n);
-      nodes.forEach(function (node) {
-        var text = node.nodeValue, lower = text.toLowerCase(), at = lower.indexOf(q);
-        if (at < 0) return;
-        var frag = document.createDocumentFragment(), from = 0;
-        while (at >= 0) {
-          frag.appendChild(document.createTextNode(text.slice(from, at)));
-          var m = document.createElement('mark'); m.textContent = text.slice(at, at + q.length); frag.appendChild(m);
-          from = at + q.length; at = lower.indexOf(q, from);
-        }
-        frag.appendChild(document.createTextNode(text.slice(from)));
-        node.parentNode.replaceChild(frag, node);
-      });
-    }
-    function search() {
-      var q = input.value.trim().toLowerCase();
-      box.classList.toggle('has-query', input.value.length > 0);
-      var shown = [];
-      parts.forEach(function (p) {
-        mark(p.q, p.qHtml, ''); mark(p.a, p.aHtml, '');
-        var hit = !q || (p.q.textContent + ' ' + p.a.textContent).toLowerCase().indexOf(q) >= 0;
-        p.d.hidden = !hit;
-        mark(p.q, p.qHtml, q); mark(p.a, p.aHtml, q);
-        if (hit) shown.push(p.d);
-      });
-      empty.hidden = shown.length > 0;
-      if (q) { if (!shown.some(function (d) { return d.open; }) && shown[0]) { parts.forEach(function (p) { p.d.open = false; }); shown[0].open = true; } }
-      else parts.forEach(function (p) { p.d.open = false; });
-    }
-    input.addEventListener('input', search);
-    clear.addEventListener('click', function () { input.value = ''; search(); input.focus(); });
-  })();
-</script>
-<script>
-  // Pricing: the billing switch changes the Plus price (counting to it), and the outline glides to the chosen plan,
-  // whose features show alongside. Without this script the form still works as radios and every plan's list shows.
-  (function () {
-    var form = document.getElementById('picker'); if (!form) return;
-    document.documentElement.classList.add('js');
-    var rows = form.querySelector('.rows'), glide = rows.querySelector('.glide');
-    var panels = document.querySelectorAll('.plan .panel');
-    var still = window.matchMedia('(prefers-reduced-motion: reduce)');
-    function place() {
-      var row = form.querySelector('input[name=plan]:checked').closest('.row');
-      glide.style.transform = 'translateY(' + row.offsetTop + 'px)';
-      glide.style.height = row.offsetHeight + 'px';
-      var plan = row.querySelector('input').value;
-      panels.forEach(function (p) { p.classList.toggle('on', p.getAttribute('data-plan') === plan); });
-    }
-    function count(el, to) {
-      var from = parseFloat(el.textContent) || 0;
-      if (still.matches) { el.textContent = to.toFixed(2); return; }
-      var t0 = performance.now(), dur = 450;
-      (function step(t) {
-        var k = Math.min(1, (t - t0) / dur), e = 1 - Math.pow(1 - k, 3);
-        el.textContent = (from + (to - from) * e).toFixed(2);
-        if (k < 1) requestAnimationFrame(step);
-      })(t0);
-    }
-    function period() {
-      var key = form.querySelector('input[name=period]:checked').value;
-      form.classList.toggle('yearly', key === 'year');
-      form.querySelectorAll('[data-month]').forEach(function (el) {
-        var v = el.getAttribute('data-' + key);
-        if (el.classList.contains('num')) count(el, parseFloat(v)); else el.textContent = v;
-      });
-      requestAnimationFrame(place);   // the Plus row can change height when its text does
-    }
-    form.addEventListener('change', function (e) { if (e.target.name === 'period') period(); else place(); });
-    window.addEventListener('resize', place);
-    place(); requestAnimationFrame(function () { form.classList.add('ready'); });
-  })();
-</script>
-<script>
-  // Inside Tidemark: the card deck. A plain-JS version of the card-deck carousel: drag the top card and let go to throw
-  // it (it slides back in at the bottom), or use the arrows, the arrow keys or autoplay. Autoplay waits while someone is
-  // interacting, stops off-screen, can be paused, and is off for anyone who asks for less motion.
-  (function () {
-    var deck = document.getElementById('deck');
-    if (!deck) return;
-    var pile = deck.querySelector('.deck-pile'), cards = [].slice.call(pile.children), n = cards.length;
-    var cap = deck.querySelector('.deck-cap'), count = deck.querySelector('.deck-count b'), live = deck.querySelector('.deck-sr');
-    count.nextSibling.textContent = ' / ' + n;   // the total follows the cards, so adding one never leaves it wrong
-    var play = deck.querySelector('.deck-play');
-    var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    var top = 0, busy = false, over = null, lastTouch = 0, playing = !reduce, seen = false, AUTO = 5200;
-
-    function wrap(i) { return ((i % n) + n) % n; }
-    function pad(i) { return i < 10 ? '0' + i : String(i); }
-    function tilt(i) { var u = (((i + 1) * 2654435761) >>> 0) / 4294967296; return (u * 2 - 1) * 7; }
-    function render() {
-      cards.forEach(function (c, i) {
-        var depth = wrap(i - top), d = Math.min(depth, 3), o = over && over.i === i ? over : null;
-        c.style.transform = o ? 'translate(' + o.x + 'px,' + o.y + 'px) rotate(' + o.r + 'deg)'
-          : 'translateY(' + (d ? -d * 16 : 0) + 'px) scale(' + (1 - d * 0.055) + ') rotate(' + (depth === 0 || reduce ? 0 : tilt(i)).toFixed(2) + 'deg)';
-        c.style.zIndex = o ? n + 1 : n - depth;
-        c.style.opacity = o ? 1 : depth > 3 ? 0 : 1;
-        c.style.filter = o || depth === 0 ? 'none' : 'brightness(' + (1 - d * 0.08) + ')';
-        c.dataset.mode = o ? o.mode : '';
-        c.dataset.top = depth === 0 ? '1' : '0';
-        if (depth === 0) c.removeAttribute('aria-hidden'); else c.setAttribute('aria-hidden', 'true');
-      });
-    }
-    function caption() {
-      var f = cards[top].querySelector('figcaption'), fresh = cap.cloneNode(false);
-      [].forEach.call(f.childNodes, function (k) { fresh.appendChild(k.cloneNode(true)); });
-      cap.parentNode.replaceChild(fresh, cap); cap = fresh;           // a new node replays the rise-in
-      count.textContent = pad(top + 1);
-      live.textContent = 'Card ' + (top + 1) + ' of ' + n + ': ' + f.querySelector('h3').textContent;
-    }
-    function settle(t) { over = null; top = t; busy = false; render(); caption(); }
-    function throwTop(dirX, fromX, fromY, dirY) {
-      if (busy || n < 2) return;
-      busy = true;
-      var w = pile.offsetWidth || 380, sx = dirX >= 0 ? 1 : -1;
-      over = { i: top, x: (fromX || 0) + sx * w * 1.25, y: (fromY || 0) + (dirY || 0) * 0.4 - 40, r: sx * 16, mode: 'fly' };
-      render();
-      setTimeout(function () { settle(wrap(top + 1)); }, reduce ? 200 : 430);
-    }
-    function pullBack() {
-      if (busy || n < 2) return;
-      busy = true;
-      var w = pile.offsetWidth || 380, i = wrap(top - 1);
-      over = { i: i, x: -w * 1.25, y: -40, r: -16, mode: 'snap' }; render();
-      requestAnimationFrame(function () { requestAnimationFrame(function () {
-        over = { i: i, x: 0, y: 0, r: 0, mode: 'fly' }; render();
-        setTimeout(function () { settle(i); }, reduce ? 200 : 450);
-      }); });
-    }
-
-    // Dragging the top card
-    var drag = null;
-    pile.addEventListener('pointerdown', function (e) {
-      var c = e.target.closest('.deck-card');
-      lastTouch = performance.now();
-      if (!c || c !== cards[top] || busy || (e.pointerType === 'mouse' && e.button !== 0)) return;
-      c.setPointerCapture(e.pointerId);
-      drag = { el: c, x: e.clientX, y: e.clientY, lx: e.clientX, lt: e.timeStamp, vx: 0 };
-    });
-    pile.addEventListener('pointermove', function (e) {
-      if (!drag) return;
-      var dt = Math.max(1, e.timeStamp - drag.lt);
-      drag.vx = 0.8 * ((e.clientX - drag.lx) / dt) + 0.2 * drag.vx; drag.lx = e.clientX; drag.lt = e.timeStamp;
-      var dx = e.clientX - drag.x, dy = e.clientY - drag.y;
-      over = { i: top, x: dx, y: dy, r: reduce ? 0 : dx * 0.05, mode: 'drag' }; render();
-    });
-    function up(e) {
-      if (!drag) return;
-      var dx = e.clientX - drag.x, dy = e.clientY - drag.y, vx = drag.vx, w = pile.offsetWidth || 380;
-      drag = null; lastTouch = performance.now();
-      if (Math.abs(dx) > w * 0.28 || (Math.abs(vx) > 0.55 && Math.abs(dx) > 24)) throwTop(dx, dx, dy, dy);
-      else { over = null; render(); }
-    }
-    pile.addEventListener('pointerup', up);
-    pile.addEventListener('pointercancel', up);
-
-    deck.querySelector('[data-go="next"]').addEventListener('click', function () { lastTouch = performance.now(); throwTop(1); });
-    deck.querySelector('[data-go="prev"]').addEventListener('click', function () { lastTouch = performance.now(); pullBack(); });
-    deck.addEventListener('keydown', function (e) {
-      if (e.target !== deck) return;
-      if (e.key === 'ArrowRight') throwTop(1); else if (e.key === 'ArrowLeft') pullBack(); else return;
-      lastTouch = performance.now(); e.preventDefault();
-    });
-
-    function showPlay() { play.textContent = playing ? 'Pause' : 'Play'; play.setAttribute('aria-pressed', playing ? 'false' : 'true'); }
-    play.addEventListener('click', function () { playing = !playing; lastTouch = performance.now(); showPlay(); });
-    if ('IntersectionObserver' in window) new IntersectionObserver(function (es) { seen = es[0].isIntersecting; }).observe(deck);
-    setInterval(function () {
-      if (!playing || !seen || document.hidden || busy || drag || performance.now() - lastTouch < AUTO || deck.matches(':hover') || deck.contains(document.activeElement)) return;
-      throwTop(1);
-    }, AUTO);
-
-    showPlay(); render(); caption();
-  })();
-</script>
-<script>
-// The film plays only while at least half of it is on screen, never with reduced motion, and always has a pause button.
-(function () {
-  var v = document.getElementById('film-video');
-  if (!v) return;
-  var still = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  var paused = still;          // the viewer's choice wins over scrolling
-  if (still) document.getElementById('film-note').textContent = 'No sound. Press play to watch.';
-  v.removeAttribute('controls');
-  var b = document.createElement('button');
-  b.type = 'button'; b.className = 'film-btn';
-  var play = '<svg viewBox="0 0 18 18" aria-hidden="true"><path fill="currentColor" d="M5 3.2v11.6a.8.8 0 0 0 1.2.7l9.3-5.8a.8.8 0 0 0 0-1.4L6.2 2.5A.8.8 0 0 0 5 3.2Z"/></svg>';
-  var pause = '<svg viewBox="0 0 18 18" aria-hidden="true"><rect x="4" y="3" width="3.6" height="12" rx="1" fill="currentColor"/><rect x="10.4" y="3" width="3.6" height="12" rx="1" fill="currentColor"/></svg>';
-  function show() { var on = !v.paused; b.innerHTML = on ? pause : play; b.setAttribute('aria-label', on ? 'Pause the film' : 'Play the film'); }
-  v.parentNode.appendChild(b);
-  v.addEventListener('play', show); v.addEventListener('pause', show); show();
-  b.addEventListener('click', function () { if (v.paused) { paused = false; v.play(); } else { paused = true; v.pause(); } });
-  if (!('IntersectionObserver' in window)) return;
-  new IntersectionObserver(function (es) {
-    es.forEach(function (e) {
-      if (e.isIntersecting && !paused) { v.preload = 'auto'; var p = v.play(); if (p && p.catch) p.catch(function () {}); }
-      else if (!e.isIntersecting && !v.paused) v.pause();
-    });
-  }, { threshold: 0.5 }).observe(v);
-})();
-</script>
 </body>
 </html>

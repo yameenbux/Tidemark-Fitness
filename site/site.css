@@ -1,0 +1,241 @@
+/* Tidemark website: the home page's styles. Read top to bottom in page order:
+   tokens → base → background → nav → hero → story → film → Free and Plus → privacy → support → footer.
+   Everything is served from this site: no font services and no cookies. */
+@font-face { font-family: 'Space Grotesk'; font-weight: 700; font-display: swap; src: url(fonts/SpaceGrotesk_700Bold.woff2) format('woff2'), url(fonts/SpaceGrotesk_700Bold.ttf) format('truetype'); }
+@font-face { font-family: 'Space Grotesk'; font-weight: 500; font-display: swap; src: url(fonts/SpaceGrotesk_500Medium.woff2) format('woff2'), url(fonts/SpaceGrotesk_500Medium.ttf) format('truetype'); }
+@font-face { font-family: 'Hanken Grotesk'; font-weight: 400; font-display: swap; src: url(fonts/HankenGrotesk_400Regular.woff2) format('woff2'), url(fonts/HankenGrotesk_400Regular.ttf) format('truetype'); }
+@font-face { font-family: 'Hanken Grotesk'; font-weight: 600; font-display: swap; src: url(fonts/HankenGrotesk_600SemiBold.woff2) format('woff2'), url(fonts/HankenGrotesk_600SemiBold.ttf) format('truetype'); }
+
+/* Tokens: the app's own palette (mobile/src/theme.ts). One dark page, Tidemark's plum night, whatever the device is set to. */
+:root {
+  color-scheme: dark;
+  --paper: #120E1C; --card: rgba(28,25,37,.78); --line: rgba(242,238,246,.10); --ink: #F2EEF6; --soft: #B3ABBE;
+  --plum: #2A1E45; --plum-2: #4B2E73; --on-plum: #FBF7F3; --on-plum-soft: #C9BFD6;
+  --coral: #FF6B5E; --amber: #FFA24B; --link: #FF8D7D; --mint: #5BD6A9; --mint-bg: rgba(21,41,31,.85); --panel: #2A2240; --lilac: #C2A8F2;
+  --ease: cubic-bezier(.16,1,.3,1);
+  --display: 'Space Grotesk', -apple-system, system-ui, sans-serif;
+}
+
+/* Base */
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body { margin: 0; background: var(--paper); color: var(--ink); font: 17px/1.6 'Hanken Grotesk', -apple-system, system-ui, sans-serif; overflow-x: clip; }
+a { color: var(--link); text-underline-offset: 3px; }
+img { max-width: 100%; }
+:focus-visible { outline: 3px solid var(--amber); outline-offset: 3px; border-radius: 6px; }
+.wrap { max-width: 1120px; margin: 0 auto; padding: 0 20px; }
+.skip { position: absolute; left: -9999px; }
+.skip:focus { left: 16px; top: 16px; background: var(--card); padding: 8px 14px; z-index: 30; }
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+h1, h2, h3 { font-family: var(--display); font-weight: 700; letter-spacing: -0.03em; line-height: 1.04; margin: 0; }
+h2 { font-size: clamp(36px, 6vw, 72px); text-wrap: balance; }
+h3 { font-size: 21px; letter-spacing: -0.01em; line-height: 1.15; }
+section { padding: clamp(88px, 14vw, 160px) 0; }
+.head { text-align: center; max-width: 16ch; margin: 0 auto; }
+.btn { display: inline-flex; align-items: center; justify-content: center; min-height: 52px; padding: 0 26px; border-radius: 999px; font-weight: 600; font-size: 16px;
+  text-decoration: none; transition: transform .25s var(--ease), background-color .2s, box-shadow .3s; }
+.btn:active { transform: scale(.97); }
+.btn-main { background: var(--on-plum); color: var(--plum); box-shadow: 0 10px 40px -10px rgba(255,107,94,.55); }
+.btn-main:hover { background: #fff; transform: translateY(-2px); box-shadow: 0 18px 50px -12px rgba(255,107,94,.7); }
+.btn-line { color: var(--on-plum); border: 1.5px solid rgba(251,247,243,.3); background: rgba(18,14,28,.55); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); }
+.btn-line:hover { background: rgba(251,247,243,.08); }
+.btn-soon { color: var(--on-plum-soft); border: 1.5px dashed rgba(251,247,243,.32); cursor: default; background: rgba(18,14,28,.55); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); }
+
+/* Background: a plum glow from the top left, amber streaks and a fine grain. Fixed, so the page moves over it like the
+   tide over sand. All CSS: nothing to download. */
+.bg { position: fixed; inset: 0; z-index: -1; overflow: hidden; background: var(--paper); pointer-events: none; }
+.bg-glow { position: absolute; inset: 0; background: radial-gradient(100% 100% at 0% 0%, #3A2A5E 0%, #120E1C 100%);
+  -webkit-mask: radial-gradient(125% 100% at 0% 0%, #000 0%, rgba(0,0,0,.22) 88%, transparent 100%);
+          mask: radial-gradient(125% 100% at 0% 0%, #000 0%, rgba(0,0,0,.22) 88%, transparent 100%); }
+.bg-streak { position: absolute; inset: 0; opacity: .12; transform: skewX(45deg); background: linear-gradient(#FFA24B 0%, rgba(255,107,94,.35) 45%, transparent 100%);
+  -webkit-mask: linear-gradient(90deg, transparent 0%, #000 20%, transparent 36%, #000 55%, rgba(0,0,0,.13) 67%, #000 78%, transparent 97%);
+          mask: linear-gradient(90deg, transparent 0%, #000 20%, transparent 36%, #000 55%, rgba(0,0,0,.13) 67%, #000 78%, transparent 97%); }
+.bg-streak + .bg-streak { opacity: .08; -webkit-mask: linear-gradient(90deg, transparent 9%, #000 20%, rgba(0,0,0,.4) 40%, #000 48%, rgba(0,0,0,.13) 78%, #000 88%, transparent 97%);
+                                             mask: linear-gradient(90deg, transparent 9%, #000 20%, rgba(0,0,0,.4) 40%, #000 48%, rgba(0,0,0,.13) 78%, #000 88%, transparent 97%); }
+.bg-grain { position: absolute; inset: 0; opacity: .06; background-size: 150px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='150' height='150'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 .6 0'/%3E%3C/filter%3E%3Crect width='150' height='150' filter='url(%23n)'/%3E%3C/svg%3E"); }
+
+/* Nav: floats over the hero, and gains a frosted backing once the page scrolls */
+.nav { position: fixed; inset: 0 0 auto; z-index: 20; transition: background-color .4s, box-shadow .4s, backdrop-filter .4s; }
+.nav.solid { background: rgba(18,14,28,.72); box-shadow: 0 1px 0 var(--line); backdrop-filter: blur(16px) saturate(1.3); -webkit-backdrop-filter: blur(16px) saturate(1.3); }
+.nav .wrap { display: flex; align-items: center; justify-content: space-between; gap: 16px; height: 68px; }
+.brand { display: flex; align-items: center; gap: 10px; color: var(--on-plum); text-decoration: none; font: 700 20px var(--display); letter-spacing: -0.01em; }
+.brand img { width: 34px; height: 34px; border-radius: 9px; }
+.nav ul { display: flex; gap: 26px; list-style: none; margin: 0; padding: 0; }
+.nav ul a { color: var(--on-plum-soft); text-decoration: none; font-weight: 600; font-size: 15px; white-space: nowrap; transition: color .2s; }
+.nav ul a:hover { color: var(--on-plum); }
+/* Phones: the menu keeps Free and Plus, and Support (the App Store's support link lands here); Privacy is in the footer */
+@media (max-width: 640px) { .nav ul { gap: 18px; } .nav ul li:first-child, .nav ul li:last-child { display: none; } .nav ul a { font-size: 14px; } }
+
+/* Hero: the headline over a live chart. Daily weigh-ins land as scattered dots while the trend draws one calm line
+   through them, the same chart as the app's Today screen. The first line's letters sit off their baseline like
+   noisy readings; the second line is level. */
+.hero { position: relative; min-height: max(100svh, 640px); display: flex; align-items: center; padding: 120px 0 34svh; overflow: hidden; isolation: isolate; }
+.hero canvas { position: absolute; inset: 0; width: 100%; height: 100%; z-index: -1; }
+.hero::after { content: ''; position: absolute; inset: auto 0 0; height: 30%; z-index: -1; background: linear-gradient(transparent, var(--paper)); }
+.hero-copy { width: 100%; text-align: center; will-change: transform, opacity; }
+.hero-copy.wrap { max-width: 1440px; }
+.hero h1 { font-size: clamp(46px, 7.4vw, 128px); letter-spacing: -0.045em; line-height: .96; }
+.hero h1 > span { display: block; }
+.jump { color: var(--on-plum); }
+.jump .ch { display: inline-block; transition: transform 1.1s var(--ease); }
+.calm { background: linear-gradient(90deg, var(--amber), var(--coral) 60%); -webkit-background-clip: text; background-clip: text; color: transparent; padding-bottom: .06em; }
+.ctas { display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; margin-top: clamp(28px, 4vw, 44px); }
+
+/* The opening: words rise out of a blur one after another. Only once the script has run and nobody has asked for less motion. */
+@media (prefers-reduced-motion: no-preference) {
+  .js .rise { opacity: 0; transform: translateY(24px); filter: blur(10px); transition: opacity .9s var(--ease), transform 1.1s var(--ease), filter .9s var(--ease); }
+  .js .rise:nth-child(2) { transition-delay: .25s; } .js .rise:nth-child(3) { transition-delay: .5s; }
+  .js .opened .rise { opacity: 1; transform: none; filter: none; }
+  .js .reveal { opacity: 0; transform: translateY(40px); transition: opacity 1s var(--ease), transform 1.2s var(--ease); }
+  .js .reveal.in { opacity: 1; transform: none; }
+}
+
+/* Inside Tidemark: a phone that stays put while the chapters scroll past it, changing screen with each one.
+   The stage is sticky and one screen tall; the chapters are pulled up over it, one screen tall each. */
+.story { position: relative; padding: 0; }
+.stage { position: sticky; top: 0; height: 100svh; display: grid; place-items: center; overflow: hidden; pointer-events: none; }
+.stage::before { content: ''; position: absolute; width: min(90vw, 900px); aspect-ratio: 1; border-radius: 50%; filter: blur(60px); opacity: .55;
+  background: radial-gradient(closest-side, var(--glow, #4B2E73), transparent); transition: background 1.2s var(--ease); }
+.phone { position: relative; width: min(34svh, 350px); padding: 10px; border-radius: 54px; background: #0B0910;
+  box-shadow: 0 0 0 1.5px rgba(251,247,243,.16), 0 0 0 7px #19141F, 0 0 0 8px rgba(251,247,243,.10), 0 60px 120px -30px rgba(0,0,0,.85), 0 30px 80px -40px rgba(255,107,94,.35); }
+.phone .screens { position: relative; aspect-ratio: 1179 / 2556; border-radius: 44px; overflow: hidden; background: #FBF7F3; }
+.phone img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0; transform: scale(1.06); filter: blur(6px);
+  transition: opacity .8s var(--ease), transform 1.2s var(--ease), filter .8s var(--ease); }
+.phone img.on { opacity: 1; transform: none; filter: none; }
+.chapters { position: relative; margin-top: -100svh; list-style: none; padding: 0; }
+.chapter { min-height: 100svh; display: flex; align-items: center; }
+.chapter .wrap { width: 100%; }
+.chapter h2 { font-size: clamp(36px, 5.4vw, 76px); max-width: 9.5ch; opacity: .18; transition: opacity .8s var(--ease), transform .8s var(--ease); transform: translateY(16px); }
+.chapter.on h2 { opacity: 1; transform: none; }
+.chapter h2 em { font-style: normal; background: linear-gradient(90deg, var(--amber), var(--coral)); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.pill { display: inline-block; vertical-align: middle; margin-left: .3em; font: 600 13px/1 'Hanken Grotesk', sans-serif; letter-spacing: .06em; text-transform: uppercase;
+  padding: 7px 11px; border-radius: 999px; color: var(--on-plum); background: rgba(255,107,94,.22); border: 1px solid rgba(255,107,94,.5); -webkit-text-fill-color: currentColor; }
+/* Wide screens: phone on the right, words on the left */
+@media (min-width: 900px) {
+  .stage { justify-items: end; padding-right: max(20px, calc((100vw - 1120px) / 2 + 60px)); }
+  .stage::before { right: max(-100px, calc((100vw - 1120px) / 2 - 220px)); }
+}
+/* Narrow screens: phone at the top, words over a fade at the bottom */
+@media (max-width: 899px) {
+  .stage { align-items: start; padding-top: 84px; }
+  .phone { width: min(26svh, 260px); padding: 8px; border-radius: 40px; }
+  .phone .screens { border-radius: 32px; }
+  .chapter { align-items: flex-end; padding-bottom: 7svh; }
+  .chapter .wrap { padding-top: 60px; background: linear-gradient(transparent, rgba(18,14,28,.92) 45%); }
+  .chapter h2 { font-size: clamp(32px, 8.6vw, 48px); max-width: 12ch; margin: 0 auto; text-align: center; }
+}
+/* No script: the phone shows the first screen and the chapters read as a list */
+html:not(.js) .phone img:first-child { opacity: 1; transform: none; filter: none; }
+html:not(.js) .chapter h2 { opacity: 1; transform: none; }
+
+/* The film: 25 seconds, no sound. It plays while it's on screen and stops when it isn't; with reduced motion it waits
+   for a tap. The pause button is there because anything that moves for longer than five seconds needs one. */
+.film { position: relative; max-width: 1200px; margin: 0 auto; border-radius: 28px; overflow: hidden; background: #F3EDE6; aspect-ratio: 16 / 9;
+  box-shadow: 0 60px 120px -40px rgba(0,0,0,.8), 0 0 0 1px var(--line), 0 40px 120px -60px rgba(255,107,94,.5); }
+.film video { display: block; width: 100%; height: 100%; object-fit: cover; }
+.film-btn { position: absolute; right: 16px; bottom: 16px; width: 48px; height: 48px; border-radius: 50%; border: 0; cursor: pointer;
+  display: grid; place-items: center; background: rgba(42,30,69,.78); color: #FBF7F3; backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); }
+.film-btn:hover { background: rgba(42,30,69,.92); }
+.film-btn svg { width: 18px; height: 18px; }
+@media (prefers-reduced-motion: no-preference) {
+  .js .film.reveal { transform: scale(.9); transition: opacity 1s var(--ease), transform 1.4s var(--ease); }
+  .js .film.reveal.in { transform: none; }
+}
+@media (max-width: 760px) { .film { border-radius: 16px; } .film-btn { right: 10px; bottom: 10px; } }
+
+/* Free and Plus: a billing switch, three plans and an outline that glides to the chosen one; its features show alongside */
+.plans { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 20px; margin-top: 56px; align-items: start; }
+.picker { background: var(--card); border: 1px solid var(--line); border-radius: 30px; padding: 12px; margin: 0; }
+.picker fieldset { border: 0; margin: 0; padding: 0; min-width: 0; }
+.period { position: relative; display: grid; grid-template-columns: 1fr 1fr; background: var(--paper); border-radius: 999px; padding: 5px; }
+.period label { position: relative; z-index: 1; text-align: center; padding: 9px 0; border-radius: 999px; cursor: pointer; font-weight: 600; }
+.period input, .rows input { position: absolute; opacity: 0; pointer-events: none; }
+.period label:has(input:focus-visible), .row:has(input:focus-visible) { outline: 3px solid var(--amber); outline-offset: 2px; }
+.thumb { position: absolute; top: 5px; bottom: 5px; left: 5px; width: calc(50% - 5px); border-radius: 999px; background: #2A2633; transition: transform .3s var(--ease); }
+.picker.yearly .thumb { transform: translateX(100%); }
+.rows { position: relative; display: flex; flex-direction: column; gap: 12px; margin-top: 12px !important; }
+.row { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; padding: 16px 18px; border: 1.5px solid var(--line); border-radius: 18px; cursor: pointer; }
+.row-text { display: flex; flex-direction: column; gap: 2px; }
+.row-name { font: 700 20px/1.2 var(--display); display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.row-price { color: var(--soft); }
+.row-price b { color: var(--ink); font-weight: 600; font-variant-numeric: tabular-nums; }
+.badge:empty { display: none; }
+.badge { font: 600 12.5px 'Hanken Grotesk', sans-serif; padding: 3px 8px; border-radius: 8px; background: var(--mint-bg); color: var(--mint); }
+.dot { flex: none; width: 22px; height: 22px; margin-top: 3px; border-radius: 50%; border: 2px solid var(--soft); display: grid; place-items: center; transition: border-color .3s; }
+.dot::after { content: ''; width: 10px; height: 10px; border-radius: 50%; background: var(--lilac); opacity: 0; transition: opacity .3s; }
+.row:has(input:checked) .dot { border-color: var(--lilac); }
+.row:has(input:checked) .dot::after { opacity: 1; }
+.glide { position: absolute; left: 0; right: 0; top: 0; height: 0; border: 2.5px solid var(--lilac); border-radius: 18px; pointer-events: none;
+  opacity: 0; transition: transform .3s var(--ease), height .3s var(--ease); }
+.picker.ready .glide { opacity: 1; }
+.picker .get { display: flex; justify-content: center; margin: 14px 0 4px; }
+.picker .get .btn { width: 100%; }
+.js .plan .panel:not(.on) { display: none; }
+.panel + .panel { margin-top: 26px; } .js .panel + .panel { margin-top: 0; }
+.plan { background: var(--card); border: 1px solid var(--line); border-radius: 24px; padding: 30px; }
+.plan ul { list-style: none; padding: 0; margin: 18px 0 0; }
+.plan li { padding: 9px 0 9px 32px; border-top: 1px solid var(--line); position: relative; }
+.plan li::before { content: ''; position: absolute; left: 2px; top: 13px; width: 18px; height: 18px; border-radius: 50%; background: var(--panel) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23C2A8F2' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m5.5 12.5 4.2 4.2 8.8-9.2'/%3E%3C/svg%3E") center / 12px no-repeat; }
+.fine { color: var(--soft); font-size: 14px; margin: 22px auto 0; text-align: center; max-width: 720px; }
+@media (max-width: 760px) { .plans { grid-template-columns: 1fr; margin-top: 40px; } }
+
+/* Privacy: one statement, three facts, then the policy itself as a card of sections that open one at a time */
+.facts { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; list-style: none; padding: 0; margin: 36px 0 0; }
+.facts li { font: 600 15px 'Hanken Grotesk', sans-serif; color: var(--mint); background: var(--mint-bg); padding: 10px 18px; border-radius: 999px; }
+.policy { max-width: 800px; margin: 64px auto 0; padding: 0 20px; }
+.policy-card { background: var(--card); border: 1px solid var(--line); border-radius: 22px; overflow: hidden; }
+.policy-head { padding: 24px 24px 20px; border-bottom: 1px solid var(--line); }
+.policy-head h2 { font-size: 24px; letter-spacing: -0.01em; }
+.policy-head .muted { color: var(--soft); margin: 6px 0 0; font-size: 15px; }
+.policy-head .box { background: var(--mint-bg); border-radius: 14px; padding: 14px 16px; margin-top: 16px; font-size: 16px; }
+.policy-card details + details { border-top: 1px solid var(--line); }
+.policy-card summary { cursor: pointer; list-style: none; display: flex; align-items: center; justify-content: space-between; gap: 16px;
+  padding: 16px 24px; font: 600 16.5px/1.4 'Hanken Grotesk', sans-serif; }
+.policy-card summary::-webkit-details-marker { display: none; }
+.policy-card summary:hover span { color: var(--link); }
+.policy-card summary:focus-visible { outline: 3px solid var(--amber); outline-offset: -3px; }
+.policy-card summary svg { flex: none; width: 16px; height: 16px; color: var(--soft); transition: transform .25s var(--ease); }
+.policy-card details[open] summary svg { transform: rotate(180deg); }
+.policy-panel { padding: 0 24px 18px; color: var(--soft); font-size: 16px; }
+.policy-panel p { margin: 0 0 10px; } .policy-panel p:last-child { margin-bottom: 0; }
+.policy-panel ul { margin: 0; padding-left: 20px; } .policy-panel li { margin: 6px 0; }
+.policy-note { color: var(--soft); font-size: 15px; margin-top: 14px; text-align: center; }
+
+/* Support: a search box and rounded questions that open one at a time */
+.faq { margin: 48px auto 0; max-width: 760px; display: flex; flex-direction: column; gap: 12px; }
+.faq-search { position: relative; }
+.faq-search input { width: 100%; height: 52px; border-radius: 999px; border: 1px solid var(--line); background: var(--card); color: var(--ink);
+  padding: 0 48px 0 22px; font: 400 16px 'Hanken Grotesk', sans-serif; appearance: none; -webkit-appearance: none; }
+.faq-search input::placeholder { color: var(--soft); }
+.faq-search input::-webkit-search-cancel-button, .faq-search input::-webkit-search-decoration { -webkit-appearance: none; }
+.faq-search input:focus-visible { outline: 3px solid var(--amber); outline-offset: 2px; }
+.faq-clear { position: absolute; top: 50%; right: 10px; transform: translateY(-50%); width: 32px; height: 32px; border: 0; border-radius: 50%;
+  background: transparent; color: var(--soft); cursor: pointer; display: none; align-items: center; justify-content: center; }
+.faq-clear:hover { background: var(--panel); color: var(--ink); }
+.faq-search.has-query .faq-clear { display: inline-flex; }
+.faq-list { display: flex; flex-direction: column; gap: 10px; }
+.faq details { border-radius: 18px; background: var(--card); border: 1px solid var(--line); overflow: hidden; }
+.faq details[hidden] { display: none; }
+.faq summary { cursor: pointer; list-style: none; display: flex; align-items: flex-start; justify-content: space-between; gap: 16px;
+  padding: 18px 22px; font: 600 17px/1.45 'Hanken Grotesk', sans-serif; letter-spacing: -0.01em; border-radius: 18px; }
+.faq summary::-webkit-details-marker { display: none; }
+.faq summary:focus-visible { outline: 3px solid var(--amber); outline-offset: -3px; }
+.faq summary svg { flex: none; width: 18px; height: 18px; margin-top: 4px; color: var(--soft); transition: transform .35s var(--ease); }
+.faq details[open] summary svg { transform: rotate(180deg); }
+.faq .answer { overflow: hidden; }
+.faq .answer p { margin: 0; padding: 0 22px 20px; color: var(--soft); max-width: 40em; }
+.faq mark { background: rgba(255,162,75,.35); color: inherit; border-radius: 3px; padding: 0 2px; }
+.faq-empty { color: var(--soft); text-align: center; padding: 28px 8px; margin: 0; }
+.contact { text-align: center; margin: 32px 0 0; color: var(--soft); }
+
+footer { border-top: 1px solid var(--line); color: var(--on-plum-soft); padding: 40px 0; font-size: 15px; }
+footer .wrap { display: flex; flex-direction: column; align-items: center; gap: 6px; text-align: center; }
+footer a { color: var(--on-plum); }
+footer p { margin: 0; }
+
+/* Less motion: everything is simply there, and nothing glides */
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  .jump .ch, .phone img, .chapter h2, .stage::before, .thumb, .glide, .dot, .dot::after, .faq summary svg, .policy-card summary svg, .btn { transition: none; }
+}

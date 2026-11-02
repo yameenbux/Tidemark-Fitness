@@ -79,6 +79,7 @@ function Main() {
   const [log, setLog] = useState<{ key: string | null; n: number } | null>(null);
   const [toast, setToast] = useState<ToastMsg | null>(null);
   const [backupHidden, setBackupHidden] = useState(false);
+  const [justSetUp, setJustSetUp] = useState(false);   // setup has just finished in this session
   const lock = useLock(t.ready, prefs, t.setPrefs);
   const insets = useSafeAreaInsets();
   const health = useHealth(t);
@@ -132,6 +133,7 @@ function Main() {
       notify(`${lock.lockName} wasn't turned on`, `You can switch the lock on any time in Settings.`);
     }
     t.setSettings(s);
+    setJustSetUp(true);   // the app opens with Plus offered once (see PlusProvider)
     // The starting weight counts as today's weigh-in (never back-dated to the plan's Monday)
     if (parseKey(s.plan.start) <= startOfDay()) t.setWeight(dateKey(new Date()), s.plan.startKg);
     setTab('today');
@@ -166,7 +168,7 @@ function Main() {
   // purchase that completes while locked (e.g. approved in a banking app) is finished and unlocks.
   if (lock.locked) {
     return (
-      <PlusProvider status={prefs.plus} onStatus={onPlusStatus} locked>
+      <PlusProvider key="app" status={prefs.plus} onStatus={onPlusStatus} locked>
         <LockScreen lockName={lock.lockName} onUnlock={lock.tryUnlock} />
       </PlusProvider>
     );
@@ -175,7 +177,7 @@ function Main() {
   if (!settings) {
     const kept = Object.keys(state.weights).length;
     return (
-      <PlusProvider status={prefs.plus} onStatus={onPlusStatus}>
+      <PlusProvider key="setup" status={prefs.plus} onStatus={onPlusStatus}>
       <CoverContext.Provider value={lock.covered}>
       <Onboarding unit={state.unit} setUnit={t.setUnit} lockAvailable={lock.lockAvailable} lockName={lock.lockName}
         onDone={finishSetup} onRestore={data.restore}
@@ -212,7 +214,7 @@ function Main() {
   );
 
   return (
-    <PlusProvider status={prefs.plus} onStatus={onPlusStatus}>
+    <PlusProvider key="app" status={prefs.plus} onStatus={onPlusStatus} audience={settings.medication ? 'medication' : 'general'} welcome={justSetUp}>
       <CoverContext.Provider value={lock.covered}>
       <DoneWindow>
       <View style={s.fill}>

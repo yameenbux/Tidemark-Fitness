@@ -25,7 +25,7 @@ If Expo Go says the project needs a different SDK version, update Expo Go from t
 
 **Free and Plus.** The core is free: weigh-ins, the trend and plan, notes and tags on a day, Apple Health sync, the
 medication log with dose reminders, holding mode after the goal, "hide my weight", reminders, Face ID lock, backups,
-up to 3 habits, waist measurements. **Tidemark Plus** (£2.99 a month, £19.99 a year with a 7-day free trial or a launch
+up to 3 habits, waist measurements. **Tidemark Plus** (£3.99 a month, £19.99 a year with a 7-day free trial or a launch
 price, or £49.99 once) adds
 medication insights (trend at each dose, injection-site rotation, side effects against the dose cycle), a PDF report
 for a doctor, a daily protein minimum, all 6 habits, photos and the other measurements, calories, and password-protected backups. It's sold through Apple with

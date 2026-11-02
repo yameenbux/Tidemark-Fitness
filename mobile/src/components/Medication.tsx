@@ -91,9 +91,15 @@ export function MedicationToday({ med, doses, onChange, onHistory, plus, onEffec
 }
 
 /** Trend tab: how the trend moved on each dose, in order. The question people on a GLP-1 ask most. */
-export function MedicationTrend({ med, doses, series, unit, onHistory, effects = {}, onReport }: {
-  med: Medication; doses: DoseLog; series: TrendPoint[]; unit: Unit; onHistory?: () => void; effects?: EffectLog; onReport?: () => void;
+/**
+ * Each dose and how the trend moved during it, then side-effect patterns. `onUnlock` makes it the free version's preview:
+ * the person's own doses are listed but each result is hidden, with one button to Plus. Seeing your own numbers waiting
+ * says more than a feature list.
+ */
+export function MedicationTrend({ med, doses, series, unit, onHistory, effects = {}, onReport, onUnlock }: {
+  med: Medication; doses: DoseLog; series: TrendPoint[]; unit: Unit; onHistory?: () => void; effects?: EffectLog; onReport?: () => void; onUnlock?: () => void;
 }) {
+  const locked = !!onUnlock;
   const runs = dosePeriods(doses, series);
   const patterns = effectPatterns(effects, doses).slice(0, 4);
   return (
@@ -101,15 +107,19 @@ export function MedicationTrend({ med, doses, series, unit, onHistory, effects =
       {!runs.length
         ? <Text style={s.sub}>Mark doses as taken on Today and this shows how your trend moved at each dose.</Text>
         : runs.slice().reverse().map(r => (
-          <View key={r.from} style={s.row} accessible accessibilityLabel={`${doseText(r.mg) || 'Dose'} from ${longDate(r.from)}, ${r.doses} doses${r.trendChange != null ? `, trend ${showChange(r.trendChange, unit, 1)}` : ''}`}>
+          <View key={r.from} style={s.row} accessible accessibilityLabel={`${doseText(r.mg) || 'Dose'} from ${longDate(r.from)}, ${r.doses} doses${locked ? ', trend change shown with Plus' : r.trendChange != null ? `, trend ${showChange(r.trendChange, unit, 1)}` : ''}`}>
             <View style={{ flex: 1 }}>
               <Text style={s.rowTitle}>{doseText(r.mg) || 'Dose'} · from {shortDate(parseKey(r.from))}</Text>
               <Text style={s.sub}>{r.doses} dose{r.doses === 1 ? '' : 's'}{r.weeks ? ` over ${r.weeks} week${r.weeks === 1 ? '' : 's'}` : ''}</Text>
             </View>
-            <Text style={s.change}>{r.trendChange != null ? showChange(r.trendChange, unit, 1) : '—'}</Text>
+            {locked
+              ? <View style={s.hidden}><Icon name="lock" size={13} color={C.inkSoft} strokeWidth={2.4} /><Text style={s.hiddenTxt}>•••</Text></View>
+              : <Text style={s.change}>{r.trendChange != null ? showChange(r.trendChange, unit, 1) : '—'}</Text>}
           </View>
         ))}
-      {patterns.length > 0 && <>
+      {locked && patterns.length > 0 && <Text style={s.foot}>{patterns.length} side effect{patterns.length === 1 ? '' : 's'} noted. Plus shows which day after a dose each one peaks.</Text>}
+      {locked && <View style={s.actions}><Button label="See your trend at each dose" kind="primary" small onPress={onUnlock} /></View>}
+      {!locked && patterns.length > 0 && <>
         <Text style={s.sectionK}>Side effects through the week</Text>
         {patterns.map(p => {
           const peak = p.byDay.indexOf(Math.max(...p.byDay));
@@ -128,10 +138,10 @@ export function MedicationTrend({ med, doses, series, unit, onHistory, effects =
         })}
         <Text style={s.foot}>Bars: dose day, then each day after it.</Text>
       </>}
-      <View style={s.actions}>
+      {!locked && <View style={s.actions}>
         {onHistory && runs.length > 0 && <Button label="Edit dose history" kind="ghost" small onPress={onHistory} />}
         {onReport && <Button label="Report for your doctor" kind="ghost" small onPress={onReport} />}
-      </View>
+      </View>}
       <Text style={s.foot}>A record, not advice: talk to your prescriber about any change to your medication.</Text>
     </Card>
   );
@@ -149,6 +159,8 @@ const s = themed(() => StyleSheet.create({
   row: { flexDirection: 'row', alignItems: 'center', paddingVertical: 10, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: C.line },
   rowTitle: { fontFamily: F.bodySemi, fontSize: 15, color: C.ink },
   change: { fontFamily: F.displaySemi, fontSize: 16, color: C.ink },
+  hidden: { flexDirection: 'row', alignItems: 'center', gap: 5, paddingHorizontal: 10, paddingVertical: 4, borderRadius: 999, backgroundColor: C.panel },
+  hiddenTxt: { fontFamily: F.displaySemi, fontSize: 15, color: C.inkSoft, letterSpacing: 1 },
   foot: { fontFamily: F.body, fontSize: 12.5, color: C.inkSoft, marginTop: 10, lineHeight: 17 },
   sites: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
   site: { minHeight: 44, minWidth: 64, paddingHorizontal: 10, borderRadius: 999, backgroundColor: C.chip, alignItems: 'center', justifyContent: 'center' },

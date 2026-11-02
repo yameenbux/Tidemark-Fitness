@@ -14,7 +14,7 @@ const product = (id: string, price: string, trial = false) => ({ id, displayPric
 beforeEach(() => {
   jest.clearAllMocks();
   N.fetchProducts.mockImplementation(async ({ type }: { type: string }) => type === 'subs'
-    ? [product(PLUS_PRODUCTS.monthly, '£2.99', true), product(PLUS_PRODUCTS.yearly, '£19.99', true)]
+    ? [product(PLUS_PRODUCTS.monthly, '£3.99', true), product(PLUS_PRODUCTS.yearly, '£19.99', true)]
     : [product(PLUS_PRODUCTS.lifetime, '£49.99')]);
   N.getAvailablePurchases.mockResolvedValue([]);
   N.isEligibleForIntroOfferIOS.mockResolvedValue(true);
@@ -42,7 +42,7 @@ describe('buying Plus', () => {
     expect(await screen.findByText('Try free for 7 days')).toBeTruthy();       // yearly is preselected
     expect(screen.getByText(/renews automatically unless you cancel at least 24 hours/)).toBeTruthy();
     expect(screen.getByText('Free for 7 days, then £19.99 a year. Cancel any time.')).toBeTruthy();   // the trial, right by the button
-    expect(screen.getByText('Save 44%')).toBeTruthy();                       // £19.99 vs 12 × £2.99 is 44.3%: rounded down
+    expect(screen.getByText('Save 58%')).toBeTruthy();                       // £19.99 vs 12 × £3.99 is 58.2%: rounded down
     expect(screen.getByText('£1.67 a month')).toBeTruthy();
     expect(screen.getByLabelText('Terms of use')).toBeTruthy();
     expect(screen.getByLabelText('Privacy policy')).toBeTruthy();
@@ -55,7 +55,7 @@ describe('buying Plus', () => {
   });
   test('no saving badge when the store gives no numeric prices', async () => {
     N.fetchProducts.mockImplementation(async ({ type }: { type: string }) => type === 'subs'
-      ? [{ ...product(PLUS_PRODUCTS.monthly, '£2.99', true), price: undefined }, { ...product(PLUS_PRODUCTS.yearly, '£19.99', true), price: undefined }]
+      ? [{ ...product(PLUS_PRODUCTS.monthly, '£3.99', true), price: undefined }, { ...product(PLUS_PRODUCTS.yearly, '£19.99', true), price: undefined }]
       : [product(PLUS_PRODUCTS.lifetime, '£49.99')]);
     render(<Harness><Probe /></Harness>);
     fireEvent.press(screen.getByText('open'));
@@ -91,7 +91,7 @@ describe('buying Plus', () => {
   test('the trial length comes from the offer’s own period', async () => {
     const offer = { type: 'introductory', paymentMode: 'free-trial', period: { unit: 'day', value: 3 }, periodCount: 1 };
     N.fetchProducts.mockImplementation(async ({ type }: { type: string }) => type === 'subs'
-      ? [{ ...product(PLUS_PRODUCTS.monthly, '£2.99'), subscriptionOffers: [offer] }, { ...product(PLUS_PRODUCTS.yearly, '£19.99'), subscriptionOffers: [offer] }]
+      ? [{ ...product(PLUS_PRODUCTS.monthly, '£3.99'), subscriptionOffers: [offer] }, { ...product(PLUS_PRODUCTS.yearly, '£19.99'), subscriptionOffers: [offer] }]
       : [product(PLUS_PRODUCTS.lifetime, '£49.99')]);
     render(<Harness><Probe /></Harness>);
     fireEvent.press(screen.getByText('open'));
@@ -100,20 +100,20 @@ describe('buying Plus', () => {
   test('a launch price on yearly says what is paid now and what it renews at', async () => {
     const launch = { type: 'introductory', paymentMode: 'pay-up-front', displayPrice: '£11.99', price: 11.99, period: { unit: 'year', value: 1 }, periodCount: 1 };
     N.fetchProducts.mockImplementation(async ({ type }: { type: string }) => type === 'subs'
-      ? [product(PLUS_PRODUCTS.monthly, '£2.99'), { ...product(PLUS_PRODUCTS.yearly, '£19.99'), subscriptionOffers: [launch] }]
+      ? [product(PLUS_PRODUCTS.monthly, '£3.99'), { ...product(PLUS_PRODUCTS.yearly, '£19.99'), subscriptionOffers: [launch] }]
       : [product(PLUS_PRODUCTS.lifetime, '£49.99')]);
     render(<Harness><Probe /></Harness>);
     fireEvent.press(screen.getByText('open'));
     expect(await screen.findByText('£11.99 for the first year, then £19.99 a year. Cancel any time.')).toBeTruthy();
     expect(screen.getByText('Subscribe for £11.99')).toBeTruthy();
     expect(screen.getByText(/^After the introductory price, £19\.99 a year is charged/)).toBeTruthy();
-    expect(screen.getByText('Save 44%')).toBeTruthy();                       // the saving is on the regular prices
+    expect(screen.getByText('Save 58%')).toBeTruthy();                       // the saving is on the regular prices
   });
   test('someone who has had an introductory offer is shown the plain price, not the launch price', async () => {
     N.isEligibleForIntroOfferIOS.mockResolvedValue(false);
     const launch = { type: 'introductory', paymentMode: 'pay-up-front', displayPrice: '£11.99', price: 11.99, period: { unit: 'year', value: 1 }, periodCount: 1 };
     N.fetchProducts.mockImplementation(async ({ type }: { type: string }) => type === 'subs'
-      ? [product(PLUS_PRODUCTS.monthly, '£2.99'), { ...product(PLUS_PRODUCTS.yearly, '£19.99'), subscriptionOffers: [launch] }]
+      ? [product(PLUS_PRODUCTS.monthly, '£3.99'), { ...product(PLUS_PRODUCTS.yearly, '£19.99'), subscriptionOffers: [launch] }]
       : [product(PLUS_PRODUCTS.lifetime, '£49.99')]);
     render(<Harness><Probe /></Harness>);
     fireEvent.press(screen.getByText('open'));

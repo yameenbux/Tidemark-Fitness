@@ -70,7 +70,7 @@ rather than trailing a week behind it the way a plain moving average does.
 One app, free to download. The whole core is free; **Tidemark Plus** adds the
 extras for people who want them.
 
-<img src="assets/diagrams/02-free-and-plus.svg" alt="What's free, what's in Tidemark Plus at £2.99 a month, £19.99 a year or £49.99 once, and what is not built yet" width="100%">
+<img src="assets/diagrams/02-free-and-plus.svg" alt="What's free, what's in Tidemark Plus at £3.99 a month, £19.99 a year or £49.99 once, and what is not built yet" width="100%">
 
 > [!IMPORTANT]
 > **Everything in green is built, tested and working. It is not on the App Store
@@ -325,8 +325,8 @@ installs packages, gets read access only, and every action is pinned to a commit
 | | |
 | :--- | :--- |
 | **Tidemark** | Free |
-| **Plus, monthly** | £2.99 a month |
-| **Plus, yearly** | £19.99 a year, 7 days free (44% less than monthly) |
+| **Plus, monthly** | £3.99 a month |
+| **Plus, yearly** | £19.99 a year, 7 days free (58% less than monthly) |
 | **Plus, lifetime** | £49.99 once |
 | **Launch offer** | yearly at £11.99 for the first year, then £19.99, for the first 90 days |
 
@@ -334,10 +334,11 @@ Why these prices (checked against the UK App Store on 10 Oct 2026): Happy Scale
 charges £1.99/£11.49/£39.99 lifetime for a trend-only app, Libra £1.99/£17.99,
 and Shotsy £29.99–£39.99 a year for GLP-1 tracking. Plus includes the dose
 analysis and doctor report, so it sits above the trend apps and below Shotsy.
-Lifetime is 2.5× yearly so it doesn't undercut the subscription.
+Lifetime is 2.5× yearly so it doesn't undercut the subscription. Monthly is £3.99
+(raised from £2.99 before launch) so that yearly is the obvious deal: people who pay yearly stay longer.
 
 **The prices live in App Store Connect, not in the code.** The paywall shows
-whatever Apple returns, in the person's own currency. The "Save 44%" badge and
+whatever Apple returns, in the person's own currency. The "Save 58%" badge and
 the "£1.67 a month" line are worked out from those prices at runtime, and the
 percentage is rounded down so it can never overstate the saving. Change a price
 in App Store Connect and the paywall follows. Then update the table above and
@@ -427,7 +428,7 @@ In App Store Connect, once the developer account is approved:
 3. **Create the app** with bundle ID `com.yameenbux.tidemark`. *Done: it's listed
    as "Tidemark: Weight Trend Tracker" (the Home Screen still says Tidemark).*
 4. **Create the products**: a subscription group with
-   `com.yameenbux.tidemark.plus.monthly` (£2.99, no trial) and `.yearly` (£19.99,
+   `com.yameenbux.tidemark.plus.monthly` (£3.99, no trial) and `.yearly` (£19.99,
    with the launch offer above, then a one-week free trial), and the
    non-consumable `com.yameenbux.tidemark.plus.lifetime` (£49.99).
 5. **Fill in the App Store ID** (App Information → Apple ID) as `APP_STORE_ID`
@@ -468,8 +469,8 @@ Three more that catch people out:
 - **Never claim a feature that isn't built.** Apple Health, iCloud sync and
   widgets are *in development* in this file, in the app and on the App Store,
   until they are real.
-- **Never round a saving up.** £19.99 against twelve months at £2.99 is 44.3%,
-  so the badge says 44%. A rounded-up discount is a misleading price under UK
+- **Never round a saving up.** £19.99 against twelve months at £3.99 is 58.2%,
+  so the badge says 58%. A rounded-up discount is a misleading price under UK
   consumer law.
 - **"Data Not Collected" is a commitment, not a description.** It stays true
   only while nothing in the app sends data anywhere. Check it whenever a

@@ -1,4 +1,4 @@
-import { cleanPlus, introText, NO_PLUS, OFFLINE_GRACE_MS, PLUS_PRODUCTS, perMonth, plusActive, plusFrom, usableHabits, yearlySaving } from '../plus';
+import { perksFor, restText, PAYWALL_LEAD, cleanPlus, introText, NO_PLUS, OFFLINE_GRACE_MS, PLUS_PRODUCTS, perMonth, plusActive, plusFrom, usableHabits, yearlySaving } from '../plus';
 
 const now = Date.UTC(2026, 9, 8);
 const day = 86400000;
@@ -65,8 +65,9 @@ describe('paywall prices', () => {
     expect(yearlySaving(null, 11.99)).toBeNull();
     expect(yearlySaving(1.99, 0)).toBeNull();
   });
-  test('the prices Tidemark sells at: £2.99 a month against £19.99 a year is a 44% saving', () => {
-    expect(yearlySaving(2.99, 19.99)).toBe(44);                  // 44.3%: rounded down
+  test('the prices Tidemark sells at: £3.99 a month against £19.99 a year is a 58% saving', () => {
+    expect(yearlySaving(3.99, 19.99)).toBe(58);                  // 58.2%: rounded down
+    expect(yearlySaving(2.99, 19.99)).toBe(44);                  // the old monthly price: 44.3%, rounded down
     expect(perMonth(19.99, 'GBP')).toMatch(/£1\.67/);
   });
   test('an introductory price says exactly what is paid, for how long, and what comes after', () => {
@@ -83,5 +84,29 @@ describe('paywall prices', () => {
     expect(perMonth(11.99, 'GBP')).toMatch(/£1\.00/);
     expect(perMonth(11.99, null)).toBeNull();
     expect(perMonth(11.99, 'not a currency')).toBeNull();
+  });
+});
+
+describe('the paywall speaks to the person looking', () => {
+  test('someone on a medication sees the dose insights and the doctor report first', () => {
+    expect(perksFor('medication').slice(0, 2).map(p => p.feature)).toEqual(['medication', 'report']);
+  });
+  test('everyone else sees change beyond the scale first, and medication last', () => {
+    const order = perksFor('general').map(p => p.feature);
+    expect(order[0]).toBe('body');
+    expect(order.at(-1)).toBe('medication');
+  });
+  test('the feature that was tapped always leads, and nothing in Plus is dropped or repeated', () => {
+    for (const audience of ['medication', 'general'] as const) {
+      const order = perksFor(audience, 'protein').map(p => p.feature);
+      expect(order[0]).toBe('protein');
+      expect(new Set(order).size).toBe(order.length);
+      expect(order).toHaveLength(7);
+    }
+  });
+  test('the rest read as one plain phrase', () => {
+    const rest = perksFor('medication').slice(PAYWALL_LEAD);
+    expect(restText(rest)).toBe('the protein target, the calorie estimate, more habits and password-protected backup');
+    expect(restText(rest.slice(0, 1))).toBe('the protein target');
   });
 });

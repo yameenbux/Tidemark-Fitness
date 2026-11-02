@@ -113,8 +113,10 @@ if (analytics) policy = policy.replace(NO_ANALYTICS, 'This website sets no cooki
   + 'country. It uses no cookies, stores nothing on your device and doesn’t keep your IP address, so visitors can’t be '
   + 'identified or followed from site to site.');
 const policyFile = path.join(out, 'privacy.html');
-const body = policy.match(/<main>([\s\S]*)<\/main>/);
+// Comments are dropped first: one that mentions <main> would otherwise be taken for the tag
+const body = policy.replace(/<!--[\s\S]*?-->/g, '').match(/<main>([\s\S]*)<\/main>/);
 if (!body) throw new Error('privacy.html has no <main>');
+if (/class="crumbs"/.test(body[1])) throw new Error('privacy.html: the breadcrumbs ended up inside the policy text');
 const site = fs.readFileSync(path.join(repo, 'site', 'index.html'), 'utf8');
 const slot = /<!-- PRIVACY:[^>]*-->/;
 if (!slot.test(site)) throw new Error('site/index.html has no PRIVACY slot');
@@ -138,7 +140,7 @@ addHead(path.join(out, 'index.html'), meta({ title: 'Tidemark · The weight trac
   description: 'A private iPhone weight tracker. See your trend, not the daily noise, with a plan, habits and an optional medication log. No account; data stays on your phone.' })
   + `<script type="application/ld+json">${JSON.stringify({ '@context': 'https://schema.org', '@type': 'Organization',
     name: 'YSB Ventures Ltd', url: siteUrl || undefined, email: 'support@ysbdesigns.uk', brand: { '@type': 'Brand', name: 'Tidemark' } })}</script>`);
-for (const f of ['favicon.ico', 'apple-touch-icon.png', 'page.css'])
+for (const f of ['favicon.ico', 'apple-touch-icon.png', 'page.css', 'site.css', 'site.js'])
   fs.copyFileSync(path.join(repo, 'site', f), path.join(out, f));
 fs.copyFileSync(path.join(repo, 'site', 'icon-128.png'), path.join(out, 'icon.png'));   // 128px: it's only ever shown small
 fs.cpSync(path.join(repo, 'site', 'shots'), path.join(out, 'shots'), { recursive: true });

@@ -248,7 +248,11 @@ it once the app is live, or the button opens a missing page. The site has no
 waitlist or sign-up form, so it collects nothing.
 
 **Settings → Pages → Source** must be **GitHub Actions**, not a branch.
-The website is `site/index.html`. The privacy section is filled in from
+The website's home page is `site/index.html`, with its styles in `site/site.css`
+and behaviour in `site/site.js` (the page reads fine without either). A comment
+at the top of `index.html` lists its sections and the build contracts. The app
+screens in `site/shots/` are real screenshots: replace them when the app changes,
+and only show what's in the app today. The privacy section is filled in from
 `privacy.html` when the site is built, so edit the policy in one place only.
 
 The other pages are `site/terms.html` and `site/404.html`, styled by

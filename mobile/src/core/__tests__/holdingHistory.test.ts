@@ -18,7 +18,7 @@ describe('reaching the goal and switching to holding', () => {
     const after = trendSeries(weightSeries(hold, weights));
     expect(after).toHaveLength(140);
     expect(after.at(-1)!.trend).toBeCloseTo(before.at(-1)!.trend, 6);
-    expect(weeklyRate(after)).not.toBeNull();
+    expect(weeklyRate(after, today)).not.toBeNull();       // the test's own today, not the real date
   });
   test('a second new plan keeps the same history start, and it survives a save and a backup', () => {
     const again = holdingPlan(holdingPlan(plan, addDays(today, -10)), today);

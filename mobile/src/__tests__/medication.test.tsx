@@ -53,4 +53,19 @@ describe('medication cards', () => {
     expect(screen.getByText(/1.7 mg · from 15 Sep/)).toBeTruthy();
     expect(screen.getByText(/A record, not advice/)).toBeTruthy();
   });
+  test('free preview: the person’s own doses are listed, every result is hidden, and one button opens Plus', () => {
+    const pt = (k: string, kg: number) => ({ k, d: parseKey(k), kg, trend: kg });
+    const onUnlock = jest.fn();
+    render(<MedicationTrend med={med} doses={{ '2026-09-01': { mg: 1 }, '2026-09-15': { mg: 1.7 } }}
+      series={[pt('2026-09-01', 100), pt('2026-09-15', 99)]} unit="kg" onUnlock={onUnlock} effects={{ '2026-09-02': { effects: ['nausea'], severity: 1 } }} />);
+    expect(screen.getByText(/1 mg · from 1 Sep/)).toBeTruthy();                 // their real doses
+    expect(screen.queryByText(/kg/)).toBeNull();                                // but no result, anywhere
+    expect(screen.getAllByText('•••')).toHaveLength(2);
+    expect(screen.getByLabelText(/1 mg from .*trend change shown with Plus/)).toBeTruthy();
+    expect(screen.queryByText('Nausea')).toBeNull();                            // side-effect patterns are Plus too
+    expect(screen.getByText(/^1 side effect noted\./)).toBeTruthy();
+    expect(screen.queryByText('Report for your doctor')).toBeNull();
+    fireEvent.press(screen.getByText('See your trend at each dose'));
+    expect(onUnlock).toHaveBeenCalled();
+  });
 });

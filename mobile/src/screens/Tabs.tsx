@@ -148,7 +148,7 @@ export function TrendTab({ t, settings, series, today, scrollTop, openSettings, 
   onReplan: (next: Settings['plan']) => void; onHold?: (next: Settings['plan']) => void; onEdit: (k: string) => void; onReport?: () => void;
 }) {
   const { state } = t;
-  const { plus } = usePlus();
+  const { plus, openPaywall } = usePlus();
   return (
     <TabScreen eyebrow={`${settings.plan.targets.length - 1}-week plan`} title="Trend" onSettings={() => openSettings()} scrollTop={scrollTop}>
       <CardBoundary name="Your trend"><TrendCard settings={settings} weights={state.weights} unit={state.unit} onReplan={onReplan} onHold={onHold} trend={series} today={today} notes={state.notes} /></CardBoundary>
@@ -156,6 +156,9 @@ export function TrendTab({ t, settings, series, today, scrollTop, openSettings, 
       <CardBoundary name="The chart"><ProgressChart settings={settings} weights={state.weights} unit={state.unit} trend={series} today={today} notes={state.notes} /></CardBoundary>
       {FEATURES.medication && settings.medication && (plus
         ? <CardBoundary name="Medication"><MedicationTrend med={settings.medication} doses={t.state.doses ?? {}} series={series} unit={t.state.unit} onHistory={() => openSettings('medication')} effects={t.state.effects} onReport={onReport} /></CardBoundary>
+        // Free, once doses are logged: their own doses with each result hidden. Before that, a plain teaser.
+        : Object.keys(t.state.doses ?? {}).length > 0
+        ? <CardBoundary name="Medication"><MedicationTrend med={settings.medication} doses={t.state.doses ?? {}} series={series} unit={t.state.unit} effects={t.state.effects} onUnlock={() => openPaywall('medication')} /></CardBoundary>
         : <PlusTeaser feature="medication" icon="pill" title={`${settings.medication.name} and your trend`}
             body="See how your trend moved at each dose, rotate injection sites, spot side-effect patterns and make a report for your doctor." />)}
       <SectionLabel>History</SectionLabel>

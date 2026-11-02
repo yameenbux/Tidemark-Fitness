@@ -16,7 +16,7 @@ export type PlusFeature = 'medication' | 'report' | 'protein' | 'habits' | 'body
 export const FREE_HABITS = 3;
 
 /** The Plus extras: `title` names one (e.g. "Medication log is part of Plus"), `line` is its paywall checklist line. */
-// Ordered by how many people each one is for: everyone first, people on medication last
+// The paywall reorders these for the person looking (perksFor, below)
 export const PLUS_PERKS: { feature: PlusFeature; title: string; line: string }[] = [
   { feature: 'habits', title: 'More habits', line: `Up to 6 habits (free has ${FREE_HABITS})` },
   { feature: 'body', title: 'Body tracking', line: 'Progress photos, and hips, chest and arms as well as waist' },
@@ -26,6 +26,31 @@ export const PLUS_PERKS: { feature: PlusFeature; title: string; line: string }[]
   { feature: 'protectedBackups', title: 'Password-protected backup', line: 'Password-protected backups' },
   { feature: 'medication', title: 'Medication insights', line: 'If you take a weight-loss medication: your trend at each dose, and side effects' },
 ];
+
+/** Who the paywall is talking to: someone logging a weight-loss medication, or everyone else. */
+export type PlusAudience = 'medication' | 'general';
+// What each audience is most likely to pay for, most first. Someone on a GLP-1 wants to know what each dose is doing
+// and to take a report to their prescriber; everyone else wants to see change beyond the scale.
+const LEAD: Record<PlusAudience, PlusFeature[]> = {
+  medication: ['medication', 'report', 'body', 'protein', 'calories', 'habits', 'protectedBackups'],
+  general: ['body', 'calories', 'habits', 'report', 'protein', 'protectedBackups', 'medication'],
+};
+export const PAYWALL_LEAD = 3;
+
+/**
+ * The perks in the order the paywall shows them: the one the person tapped first, then what their audience values most.
+ * The first PAYWALL_LEAD are shown as the offer; the rest are named in one line, so nothing in Plus goes unmentioned.
+ */
+export function perksFor(audience: PlusAudience, reason: PlusFeature | null = null): typeof PLUS_PERKS {
+  const order = reason ? [reason, ...LEAD[audience].filter(f => f !== reason)] : LEAD[audience];
+  return order.map(f => PLUS_PERKS.find(p => p.feature === f)!);
+}
+
+/** The perks after the lead, as one phrase: "more habits, the protein target and password-protected backup". */
+export function restText(perks: typeof PLUS_PERKS): string {
+  const names = perks.map(p => p.title.charAt(0).toLowerCase() + p.title.slice(1));
+  return names.length < 2 ? names.join('') : `${names.slice(0, -1).join(', ')} and ${names[names.length - 1]}`;
+}
 
 /** What the phone last knew about Plus. Kept so Plus works offline; re-checked with Apple whenever the app opens. */
 export interface PlusStatus {
@@ -85,7 +110,7 @@ export function cleanPlus(v: unknown): PlusStatus {
 
 /**
  * Whole percent saved by paying yearly rather than 12 months of monthly, rounded down so it never overstates
- * (£2.99 a month and £19.99 a year is 44.3%, so "Save 44%"). Null when there's no real saving or a price is missing.
+ * (£3.99 a month and £19.99 a year is 58.2%, so "Save 58%"). Null when there's no real saving or a price is missing.
  */
 export function yearlySaving(monthly: number | null | undefined, yearly: number | null | undefined): number | null {
   if (!monthly || !yearly || monthly <= 0 || yearly <= 0) return null;

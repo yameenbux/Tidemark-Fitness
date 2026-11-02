@@ -9,9 +9,11 @@ import { HabitAmount } from '../components/HabitAmount';
 import { ShinyButton } from '../components/ShinyButton';
 import { usePlus } from '../plus';
 import { FREE_HABITS } from '../core/plus';
-import { fmt, lbPart, parseWeightInput, plausible, rangeText, showAmount, showRangeError, showWeight, stPart, toLbNum } from '../core/units';
-import type { Habit, Settings, Unit } from '../core/types';
-import { DateInput, UnitToggle } from '../components/Fields';
+import { fmt, lbPart, num, parseWeightInput, plausible, rangeText, showAmount, showRangeError, showWeight, stPart, toLbNum } from '../core/units';
+import type { Habit, Medication, Settings, Unit } from '../core/types';
+import { DateInput, Field, UnitToggle } from '../components/Fields';
+import { Input } from './settings/kit';
+import { FEATURES } from '../features';
 import { DoneInput, DoneWindow } from '../components/KeyboardDone';
 import { ProgressChart } from '../components/ProgressChart';
 import { Icon, IconName } from '../components/Icons';
@@ -19,7 +21,13 @@ import { TidemarkIcon } from '../components/Logo';
 import { Button } from '../components/ui';
 import { C, F, themed } from '../theme';
 
-type Step = 'welcome' | 'current' | 'goal' | 'pace' | 'habits' | 'plan' | 'lock';
+type Step = 'welcome' | 'current' | 'goal' | 'pace' | 'habits' | 'meds' | 'plan' | 'lock';
+type MedAnswer = 'week' | 'day' | 'no';
+const MED_CHOICES: { id: MedAnswer; label: string }[] = [
+  { id: 'week', label: 'Yes, a weekly injection' },
+  { id: 'day', label: 'Yes, a daily tablet' },
+  { id: 'no', label: 'No' },
+];
 
 /** Maintenance plans: how long to hold for. */
 const HOLD = [
@@ -67,6 +75,9 @@ export function Onboarding({ unit, setUnit, lockAvailable, lockName, onDone, onR
   const [picked, setPicked] = useState<string[]>([]);        // habits chosen during setup (none by default)
   const [amounts, setAmounts] = useState<Record<string, Habit>>({});   // a chosen habit with its amount changed (e.g. Steps 10k)
   const [editStart, setEditStart] = useState(false);
+  const [meds, setMeds] = useState<MedAnswer | null>(null);   // the medication question: unanswered until tapped
+  const [medName, setMedName] = useState('');
+  const [medDose, setMedDose] = useState('');
 
   // Losing, gaining or holding: each gets its own choices on the "how fast" step
   const dir = plausible(startKg) && plausible(goalKg) ? direction({ startKg, goalKg }) : 'lose';
@@ -79,12 +90,19 @@ export function Onboarding({ unit, setUnit, lockAvailable, lockName, onDone, onR
   const goalDate = dateFor(chosen) ?? dateKey(addDays(parseKey(start), 112));
   const draft = { startKg, goalKg, start, goalDate };
   const verdict = assessPlan(draft);
+  // Someone on a weight-loss medication gets the dose log set up now, with the day they set up as their dose day
+  const mg = num(medDose);
+  const medication: Medication | null = meds === 'week' || meds === 'day'
+    ? { name: medName.trim() || (meds === 'week' ? 'Weekly injection' : 'Daily tablet'), doseMg: mg > 0 && mg <= 1000 ? mg : null,
+        every: meds, weekday: parseKey(start).getDay(), remind: false, injected: meds === 'week' }
+    : null;
   const settings: Settings | null = verdict.ok
-    ? defaultSettings({ startKg: startKg!, goalKg: goalKg!, start, goalDate, targets: buildTargets(startKg!, goalKg!, start, goalDate) },
-                      SUGGESTED_HABITS.filter(h => picked.includes(h.id)).map(h => amounts[h.id] ?? h))
+    ? { ...defaultSettings({ startKg: startKg!, goalKg: goalKg!, start, goalDate, targets: buildTargets(startKg!, goalKg!, start, goalDate) },
+                           SUGGESTED_HABITS.filter(h => picked.includes(h.id)).map(h => amounts[h.id] ?? h)),
+        ...(medication ? { medication } : {}) }
     : null;
 
-  const order: Step[] = ['welcome', 'current', 'goal', 'pace', 'habits', 'plan', ...(lockAvailable ? ['lock' as Step] : [])];
+  const order: Step[] = ['welcome', 'current', 'goal', 'pace', 'habits', ...(FEATURES.medication ? ['meds' as Step] : []), 'plan', ...(lockAvailable ? ['lock' as Step] : [])];
   const idx = order.indexOf(step);
   const back = () => setStep(order[Math.max(0, idx - 1)]);
   const next = () => setStep(order[idx + 1]);
@@ -211,6 +229,29 @@ export function Onboarding({ unit, setUnit, lockAvailable, lockName, onDone, onR
           </>
         )}
 
+        {step === 'meds' && (
+          <>
+            <Text style={s.h2} accessibilityRole="header">Are you taking a weight-loss medication?</Text>
+            <Text style={s.sub}>Optional. Tidemark can log your doses and show what your trend does at each one. It only keeps a record; it never advises on dosing.</Text>
+            {MED_CHOICES.map(o => {
+              const on = meds === o.id;
+              return (
+                <Pressable key={o.id} onPress={() => setMeds(o.id)} style={[s.pace, on && s.paceOn]} accessibilityRole="radio" accessibilityState={{ checked: on }}>
+                  <Text style={[s.paceName, { flex: 1 }, on && { color: C.plum2 }]}>{o.label}</Text>
+                  <View style={[s.radio, on && s.radioOn]} />
+                </Pressable>
+              );
+            })}
+            {(meds === 'week' || meds === 'day') && (
+              <View style={{ marginTop: 18, gap: 4 }}>
+                <Field label="Name (optional)"><Input value={medName} onChangeText={setMedName} placeholder="e.g. semaglutide" accessibilityLabel="Medication name" maxLength={40} /></Field>
+                <Field label="Current dose in mg (optional)"><Input value={medDose} onChangeText={setMedDose} keyboardType="decimal-pad" placeholder="e.g. 2.5" accessibilityLabel="Current dose in milligrams" /></Field>
+                <Text style={s.note}>Doses, reminders and the day can be changed any time in Settings.</Text>
+              </View>
+            )}
+          </>
+        )}
+
         {step === 'plan' && settings && (
           <>
             <Text style={s.eyebrow}>Your plan is ready</Text>
@@ -264,6 +305,7 @@ export function Onboarding({ unit, setUnit, lockAvailable, lockName, onDone, onR
           <Button label="See my plan" kind="primary" disabled={!!verdict.error} onPress={next} />
         </>}
         {step === 'habits' && <Button label={picked.length ? `Next · ${picked.length} chosen` : 'Skip for now'} kind={picked.length ? 'primary' : 'ghost'} onPress={next} />}
+        {step === 'meds' && <Button label={meds ? 'Next' : 'Skip'} kind={meds ? 'primary' : 'ghost'} onPress={next} />}
         {step === 'plan' && (lockAvailable
           ? <Button label="Continue" onPress={next} />
           : <Button label="Start tracking" onPress={() => finish(false)} />)}

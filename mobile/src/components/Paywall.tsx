@@ -1,7 +1,7 @@
 import * as WebBrowser from 'expo-web-browser';
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, Linking, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
-import { introText, perMonth, PLUS_PERKS, PlusFeature, PlusPlan, yearlySaving } from '../core/plus';
+import { introText, PAYWALL_LEAD, perksFor, perMonth, PLUS_PERKS, PlusAudience, PlusFeature, PlusPlan, restText, yearlySaving } from '../core/plus';
 import { buy, loadOffers, PlanOffer, storeAvailable } from '../purchases';
 import { notify } from '../dialogs';
 import { PRIVACY_URL, TERMS_URL } from '../support';
@@ -41,7 +41,9 @@ function summary(o: PlanOffer): string {
  * subscription screen (price and period, auto-renewal, how to cancel, terms of use and privacy links, restore).
  * Laid out so the prices and the trial terms are on the first screen, not below a list of features.
  */
-export function Paywall({ reason, onClose, onRestore }: { reason: PlusFeature | null; onClose: () => void; onRestore: () => Promise<void> }) {
+export function Paywall({ reason, audience = 'general', welcome, onClose, onRestore }: {
+  reason: PlusFeature | null; audience?: PlusAudience; welcome?: boolean; onClose: () => void; onRestore: () => Promise<void>;
+}) {
   const [offers, setOffers] = useState<PlanOffer[] | null>(storeAvailable ? null : []);
   const [plan, setPlan] = useState<PlusPlan>('yearly');
   const [busy, setBusy] = useState(false);
@@ -49,6 +51,7 @@ export function Paywall({ reason, onClose, onRestore }: { reason: PlusFeature | 
   useEffect(() => { if (storeAvailable) loadOffers().then(setOffers).catch(() => setOffers([])); }, []);
   const chosen = offers?.find(o => o.plan === plan);
   const lead = reason ? PLUS_PERKS.find(p => p.feature === reason) : null;
+  const perks = perksFor(audience, reason), top = perks.slice(0, PAYWALL_LEAD), rest = perks.slice(PAYWALL_LEAD);
   const saving = yearlySaving(offers?.find(o => o.plan === 'monthly')?.amount, offers?.find(o => o.plan === 'yearly')?.amount);
   const stacked = fontScale > 1.3;              // three cards side by side don't fit large text
 
@@ -86,16 +89,17 @@ export function Paywall({ reason, onClose, onRestore }: { reason: PlusFeature | 
       <View style={s.hero}>
         <TidemarkIcon size={64} />
         <Text style={s.title} accessibilityRole="header">Tidemark Plus</Text>
-        <Text style={s.lead}>{lead ? `${lead.title} is part of Plus. ` : ''}Everything free stays free. Plus adds the extras, with no account and nothing leaving your phone.</Text>
+        <Text style={s.lead}>{welcome ? 'Your plan is ready, and everything in it stays free. ' : `${lead ? `${lead.title} is part of Plus. ` : ''}Everything free stays free. `}Plus adds the extras, with no account and nothing leaving your phone.</Text>
       </View>
 
       <View style={s.list}>
-        {PLUS_PERKS.map(p => (
+        {top.map(p => (
           <View key={p.feature} style={[s.line, p.feature === reason && s.lineOn]}>
             <View style={s.tick}><Icon name="check" size={14} color={C.plum2} strokeWidth={2.6} /></View>
             <Text style={s.lineTxt}>{p.line}</Text>
           </View>
         ))}
+        {rest.length > 0 && <Text style={s.rest}>Also in Plus: {restText(rest)}.</Text>}
       </View>
 
       {!storeAvailable ? (
@@ -142,6 +146,7 @@ const s = themed(() => StyleSheet.create({
   lineOn: { backgroundColor: C.panel },
   tick: { width: 24, height: 24, borderRadius: 12, backgroundColor: C.panelAlt, alignItems: 'center', justifyContent: 'center' },
   lineTxt: { flex: 1, fontFamily: F.bodySemi, fontSize: 15, color: C.ink },
+  rest: { fontFamily: F.body, fontSize: 13.5, color: C.inkSoft, lineHeight: 19, marginTop: 6, paddingHorizontal: 8 },
   cards: { flexDirection: 'row', gap: 8, marginTop: 30 },
   cardsStacked: { flexDirection: 'column', gap: 16 },
   card: { flex: 1, paddingHorizontal: 12, paddingTop: 16, paddingBottom: 14, borderRadius: 16, borderWidth: 1.5, borderColor: C.line, backgroundColor: C.bg, gap: 2 },

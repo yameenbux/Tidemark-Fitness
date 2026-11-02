@@ -2,7 +2,7 @@
 import { createContext, ReactNode, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { AppState } from 'react-native';
 import { Paywall } from './components/Paywall';
-import { plusActive, PlusFeature, PlusStatus } from './core/plus';
+import { plusActive, PlusAudience, PlusFeature, PlusStatus } from './core/plus';
 import { FEATURES } from './features';
 import { checkPlus, manageSubscription, onStoreUpdates, restore as restoreStore, storeAvailable } from './purchases';
 import { notify } from './dialogs';
@@ -22,7 +22,10 @@ export const usePlus = () => useContext(Ctx);
 
 // Where the paywall appears. iOS can't show a sheet from the app's root while another window (Settings) is open on top,
 // so any open window puts a PaywallSlot inside itself and the paywall shows in the newest one.
-interface SlotApi { top: number; add: (id: number) => void; remove: (id: number) => void; reason: PlusFeature | 'any' | null; close: () => void; onRestore: () => Promise<void> }
+interface SlotApi {
+  top: number; add: (id: number) => void; remove: (id: number) => void; reason: PlusFeature | 'any' | null; audience: PlusAudience; welcome: boolean;
+  close: () => void; onRestore: () => Promise<void>;
+}
 const SlotCtx = createContext<SlotApi | null>(null);
 let nextSlot = 1;
 export function PaywallSlot({ root }: { root?: boolean }) {
@@ -31,12 +34,17 @@ export function PaywallSlot({ root }: { root?: boolean }) {
   const add = ctx?.add, remove = ctx?.remove;
   useEffect(() => { add?.(id); return () => remove?.(id); }, [id, add, remove]);
   if (!ctx || ctx.top !== id || !ctx.reason) return null;
-  return <Paywall reason={ctx.reason === 'any' ? null : ctx.reason} onClose={ctx.close} onRestore={ctx.onRestore} />;
+  return <Paywall reason={ctx.reason === 'any' ? null : ctx.reason} audience={ctx.audience} welcome={ctx.welcome} onClose={ctx.close} onRestore={ctx.onRestore} />;
 }
 
-// Also mounted behind the lock screen (`locked`), so a purchase that completes while locked is still finished with Apple
-export function PlusProvider({ status, onStatus, locked, children }: { status: PlusStatus; onStatus: (s: PlusStatus) => void; locked?: boolean; children: ReactNode }) {
-  const [paywall, setPaywall] = useState<PlusFeature | 'any' | null>(null);
+// Also mounted behind the lock screen (`locked`), so a purchase that completes while locked is still finished with Apple.
+// `audience` orders the paywall for the person looking. `welcome` shows Plus once, as the app opens straight after setup:
+// the moment someone has just seen their plan is when an offer is most welcome, and it's one tap to close.
+export function PlusProvider({ status, onStatus, locked, audience = 'general', welcome, children }: {
+  status: PlusStatus; onStatus: (s: PlusStatus) => void; locked?: boolean; audience?: PlusAudience; welcome?: boolean; children: ReactNode;
+}) {
+  const [welcoming, setWelcoming] = useState(() => !!welcome && storeAvailable && !FEATURES.webPlus && !plusActive(status));
+  const [paywall, setPaywall] = useState<PlusFeature | 'any' | null>(() => (welcoming ? (audience === 'medication' ? 'medication' : 'any') : null));
   const slots = useRef(new Set<number>());
   const [top, setTop] = useState(0);
   const addSlot = useCallback((id: number) => { slots.current.add(id); setTop(Math.max(...slots.current)); }, []);
@@ -72,13 +80,13 @@ export function PlusProvider({ status, onStatus, locked, children }: { status: P
   const plus = FEATURES.webPlus || plusActive(status, now);
   const api = useMemo<PlusApi>(() => ({
     plus, status, storeAvailable, restore, manage: () => { manageSubscription(); },
-    openPaywall: why => setPaywall(why ?? 'any'),
+    openPaywall: why => { setWelcoming(false); setPaywall(why ?? 'any'); },
   }), [plus, status, restore]);
 
-  const close = useCallback(() => setPaywall(null), []);
+  const close = useCallback(() => { setPaywall(null); setWelcoming(false); }, []);
   // Nothing shows over the lock screen; an open paywall comes back after unlocking
-  const slotApi = useMemo<SlotApi>(() => ({ top, add: addSlot, remove: removeSlot, reason: locked ? null : paywall, close, onRestore: restore }),
-    [top, addSlot, removeSlot, locked, paywall, close, restore]);
+  const slotApi = useMemo<SlotApi>(() => ({ top, add: addSlot, remove: removeSlot, reason: locked ? null : paywall, audience, welcome: welcoming, close, onRestore: restore }),
+    [top, addSlot, removeSlot, locked, paywall, audience, welcoming, close, restore]);
   return (
     <Ctx.Provider value={api}>
       <SlotCtx.Provider value={slotApi}>

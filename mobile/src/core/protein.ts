@@ -1,14 +1,11 @@
-// A protein minimum instead of a calorie ceiling (Plus). Losing weight, and on a GLP-1 especially, appetite often
-// runs out before protein is met, and protein is what protects muscle. Guidance converges on 1.2–1.6 g per kg of
-// body weight a day; Tidemark uses the lower of your trend and your goal weight, so a high starting weight doesn't
-// set an unreachable number. It's a floor to reach, not a limit.
+// A daily protein minimum (Plus): a number the person sets, for example one their GP, dietitian or prescriber gave
+// them, and Tidemark tracks the day against it. Tidemark deliberately doesn't work the number out from body weight:
+// a target calculated for someone, on a weight-loss medication especially, edges towards clinical advice (UK MHRA
+// medical-device rules; see COMPLIANCE.md). It's a floor to reach, not a limit.
 import { addDays, dateKey, startOfDay, validKey } from './dates';
 import { numOrNull } from './units';
 
 export type ProteinLog = Record<string, number>;   // date -> grams eaten
-export const PER_KG = [1.2, 1.4, 1.6] as const;
-export type PerKg = (typeof PER_KG)[number];
-export const DEFAULT_PER_KG: PerKg = 1.4;
 export const MAX_PROTEIN_G = 400;
 
 export function cleanProtein(v: unknown): ProteinLog {
@@ -21,11 +18,17 @@ export function cleanProtein(v: unknown): ProteinLog {
   return out;
 }
 
-export const cleanPerKg = (v: unknown): PerKg => (PER_KG as readonly number[]).includes(v as number) ? (v as PerKg) : DEFAULT_PER_KG;
+/** The daily minimum the person set, in whole grams; null if it's missing or not a sensible number. */
+export function cleanProteinGrams(v: unknown): number | null {
+  const g = numOrNull(v);
+  return g != null && g >= 1 && g <= MAX_PROTEIN_G ? Math.round(g) : null;
+}
 
-/** Daily protein floor in grams, to the nearest 5. */
-export function proteinTarget(trendKg: number, goalKg: number, perKg: number = DEFAULT_PER_KG): number {
-  return Math.round(Math.min(trendKg, goalKg) * perKg / 5) * 5;
+/** Settings from storage. An old setting saved as grams per kg isn't converted: the person sets their own number. */
+export function cleanProteinSetting(v: unknown): { on: boolean; grams: number | null } | undefined {
+  if (!v || typeof v !== 'object') return undefined;
+  const o = v as Record<string, unknown>;
+  return { on: o.on === true, grams: cleanProteinGrams(o.grams) };
 }
 
 /** Adds grams to a day (negative to take some off), never below zero or above the cap. */

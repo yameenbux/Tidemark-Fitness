@@ -101,18 +101,21 @@ export function MedicationTrend({ med, doses, series, unit, onHistory, effects =
 }) {
   const locked = !!onUnlock;
   const runs = dosePeriods(doses, series);
+  // The free preview shows one real result, the first dose's, so what Plus would show isn't a guess; the rest are locked
+  const shown = locked && runs.length >= 2 ? runs[0].from : null;
+  const hide = (from: string) => locked && from !== shown;
   const patterns = effectPatterns(effects, doses).slice(0, 4);
   return (
     <Card title={`${med.name} and your trend`}>
       {!runs.length
         ? <Text style={s.sub}>Mark doses as taken on Today and this shows how your trend moved at each dose.</Text>
         : runs.slice().reverse().map(r => (
-          <View key={r.from} style={s.row} accessible accessibilityLabel={`${doseText(r.mg) || 'Dose'} from ${longDate(r.from)}, ${r.doses} doses${locked ? ', trend change shown with Plus' : r.trendChange != null ? `, trend ${showChange(r.trendChange, unit, 1)}` : ''}`}>
+          <View key={r.from} style={s.row} accessible accessibilityLabel={`${doseText(r.mg) || 'Dose'} from ${longDate(r.from)}, ${r.doses} doses${hide(r.from) ? ', trend change shown with Plus' : r.trendChange != null ? `, trend ${showChange(r.trendChange, unit, 1)}` : ''}`}>
             <View style={{ flex: 1 }}>
               <Text style={s.rowTitle}>{doseText(r.mg) || 'Dose'} · from {shortDate(parseKey(r.from))}</Text>
               <Text style={s.sub}>{r.doses} dose{r.doses === 1 ? '' : 's'}{r.weeks ? ` over ${r.weeks} week${r.weeks === 1 ? '' : 's'}` : ''}</Text>
             </View>
-            {locked
+            {hide(r.from)
               ? <View style={s.hidden}><Icon name="lock" size={13} color={C.inkSoft} strokeWidth={2.4} /><Text style={s.hiddenTxt}>•••</Text></View>
               : <Text style={s.change}>{r.trendChange != null ? showChange(r.trendChange, unit, 1) : '—'}</Text>}
           </View>

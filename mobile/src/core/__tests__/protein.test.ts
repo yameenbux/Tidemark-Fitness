@@ -1,10 +1,13 @@
-import { addProtein, cleanPerKg, cleanProtein, proteinTarget, proteinWeek } from '../protein';
+import { addProtein, cleanProtein, cleanProteinGrams, proteinWeek } from '../protein';
 import { normalizeSettings, buildTargets } from '../plan';
 
 describe('protein minimum', () => {
-  test('target uses the lower of trend and goal weight, to the nearest 5 g', () => {
-    expect(proteinTarget(110, 85, 1.4)).toBe(120);    // 85 × 1.4 = 119
-    expect(proteinTarget(70, 75, 1.6)).toBe(110);     // gaining: 70 × 1.6 = 112
+  test('the minimum is the number the person typed, in whole grams; nonsense is no number at all', () => {
+    expect(cleanProteinGrams('110')).toBe(110);
+    expect(cleanProteinGrams(95.6)).toBe(96);
+    expect(cleanProteinGrams('')).toBeNull();
+    expect(cleanProteinGrams(0)).toBeNull();
+    expect(cleanProteinGrams(999)).toBeNull();
   });
   test('adding never goes below zero or above the cap, and an empty day disappears', () => {
     let l = addProtein({}, '2026-10-09', 30);
@@ -17,12 +20,11 @@ describe('protein minimum', () => {
     const l = { '2026-10-08': 130, '2026-10-07': 90, '2026-10-05': 125, '2026-10-09': 200, '2026-09-30': 200 };
     expect(proteinWeek(l, 120, new Date(2026, 9, 9))).toEqual({ logged: 3, reached: 2 });
   });
-  test('cleaning: junk dropped; the setting survives saving with a valid grams-per-kg', () => {
+  test('cleaning: junk dropped; the setting keeps the person’s own number, and never works one out', () => {
     expect(cleanProtein({ '2026-10-01': 120.4, '2026-10-02': -5, x: 50, '2026-10-03': 9999 })).toEqual({ '2026-10-01': 120 });
-    expect(cleanPerKg(1.6)).toBe(1.6);
-    expect(cleanPerKg(5)).toBe(1.4);
     const plan = { start: '2026-09-07', startKg: 92, goalKg: 84, goalDate: '2027-01-04', targets: buildTargets(92, 84, '2026-09-07', '2027-01-04') };
-    const s = normalizeSettings({ plan, event: null, habits: [], sessions: {}, meals: { items: [], target: {} }, protein: { on: true, perKg: 9 } })!;
-    expect(s.protein).toEqual({ on: true, perKg: 1.4 });
+    const norm = (protein: unknown) => normalizeSettings({ plan, event: null, habits: [], sessions: {}, meals: { items: [], target: {} }, protein })!.protein;
+    expect(norm({ on: true, grams: 110 })).toEqual({ on: true, grams: 110 });
+    expect(norm({ on: true, perKg: 1.4 })).toEqual({ on: true, grams: null });   // an old per-kg setting asks again
   });
 });

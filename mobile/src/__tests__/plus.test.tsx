@@ -44,12 +44,15 @@ describe('buying Plus', () => {
     expect(screen.getByText('Free for 7 days, then £19.99 a year. Cancel any time.')).toBeTruthy();   // the trial, right by the button
     expect(screen.getByText('Save 58%')).toBeTruthy();                       // £19.99 vs 12 × £3.99 is 58.2%: rounded down
     expect(screen.getByText('£1.67 a month')).toBeTruthy();
+    expect(screen.getByLabelText(/^Day 5: A reminder that your trial ends in 2 days, if you allow notifications/)).toBeTruthy();   // the timeline
+    expect(screen.getByLabelText('Day 7: £19.99 a year starts, unless you cancel before.')).toBeTruthy();
     expect(screen.getByLabelText('Terms of use')).toBeTruthy();
     expect(screen.getByLabelText('Privacy policy')).toBeTruthy();
     await act(async () => { fireEvent.press(screen.getByText('Try free for 7 days')); });
     expect(N.requestPurchase).toHaveBeenLastCalledWith(expect.objectContaining({ type: 'subs', request: expect.objectContaining({ apple: { sku: PLUS_PRODUCTS.yearly } }) }));
     fireEvent.press(screen.getByRole('radio', { name: /^Lifetime/ }));
     expect(screen.getByText('£49.99 once. No subscription.')).toBeTruthy();
+    expect(screen.queryByLabelText('How the free trial works')).toBeNull();             // no trial on lifetime, so no timeline
     await act(async () => { fireEvent.press(screen.getByText('Buy for £49.99')); });
     expect(N.requestPurchase).toHaveBeenLastCalledWith(expect.objectContaining({ type: 'in-app', request: expect.objectContaining({ apple: { sku: PLUS_PRODUCTS.lifetime } }) }));
   });
@@ -160,6 +163,14 @@ describe('the free version', () => {
     fireEvent.press(screen.getByLabelText(/^Report for your doctor/));
     expect(await screen.findAllByText(/The report for your doctor is part of Plus/)).toHaveLength(1);   // one paywall, shown in the Settings window
     expect(onReport).not.toHaveBeenCalled();
+  });
+  test('the first doctor report is free: it’s made straight away, with no paywall', () => {
+    const onReport = jest.fn();
+    render(<Harness><SettingsScreen {...props()} onReport={onReport} sampleReportLeft /></Harness>);
+    expect(screen.getByText('1 free')).toBeTruthy();
+    fireEvent.press(screen.getByLabelText(/^Report for your doctor/));
+    expect(onReport).toHaveBeenCalled();
+    expect(screen.queryByText(/is part of Plus/)).toBeNull();
   });
   test('logging a medication is free: its page opens without the paywall', async () => {
     render(<Harness><SettingsScreen {...props()} /></Harness>);

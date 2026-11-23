@@ -29,7 +29,7 @@ export interface Settings {
   meals: { items: Meal[]; target: Macros };
   trackCalories?: boolean;   // optional one-number-a-day calorie logging
   medication?: Medication | null;   // optional GLP-1 (or other) medication companion
-  protein?: { on: boolean; perKg: import('./protein').PerKg };   // Plus: a daily protein minimum
+  protein?: { on: boolean; grams: number | null };   // Plus: a daily protein minimum the person sets (never calculated)
 }
 
 /** A medication taken on a schedule, e.g. a weekly GLP-1 injection. Tidemark only records it; it never advises on dosing. */

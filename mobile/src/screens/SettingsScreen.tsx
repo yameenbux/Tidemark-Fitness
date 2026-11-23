@@ -12,7 +12,6 @@ import type { DoseLog, Habit, Settings, Unit } from '../core/types';
 import type { Reminder } from '../core/storage';
 import { AppearanceToggle, LengthToggle, UnitToggle } from '../components/Fields';
 import { DoneWindow } from '../components/KeyboardDone';
-import { Tabs } from '../components/ui';
 import { askPassword, notify } from '../dialogs';
 import { success } from '../feel';
 import { FEATURES, WEB_PREVIEW } from '../features';
@@ -22,7 +21,8 @@ import { PaywallSlot, usePlus } from '../plus';
 import { PLUS_PRODUCTS } from '../core/plus';
 import { remindersSetUntil } from '../reminders';
 import { AppearancePref, C } from '../theme';
-import { Group, Row, SwitchRow, TimeInput, Pushed, s } from './settings/kit';
+import { Group, Input, Row, SwitchRow, TimeInput, Pushed, s } from './settings/kit';
+import { cleanProteinGrams } from '../core/protein';
 import { PlanPage, EventPage } from './settings/PlanPage';
 import { HabitsPage, SessionsPage } from './settings/HabitsPage';
 import { MealsPage } from './settings/MealsPage';
@@ -45,6 +45,7 @@ export interface SettingsProps {
   hideWeight?: boolean; onHideWeightChange?: (on: boolean) => void;
   health?: { on: boolean; set: (on: boolean) => Promise<boolean> };   // absent where there's no Apple Health
   onReport?: () => void;
+  sampleReportLeft?: boolean;   // without Plus, the first report is free
   autoBackup?: AutoBackupApi;   // absent where automatic backups can't run (web, Expo Go, Android)
   lastBackup: string | null; weighIns: number; weights: Record<string, number>;
   doses: DoseLog; onDoses: (d: DoseLog) => void;
@@ -125,15 +126,17 @@ export function SettingsScreen(p: SettingsProps) {
           <Row icon="meal" label="Meals" value={settings.meals.items.length ? String(settings.meals.items.length) : 'None'} onPress={() => setPage('meals')} />
 {FEATURES.medication &&           <Row icon="pill" label="Medication" value={settings.medication ? `${settings.medication.name}${settings.medication.doseMg ? ` ${settings.medication.doseMg} mg` : ''} · ${settings.medication.every === 'day' ? 'daily' : DAY_ABBR[settings.medication.weekday]}` : 'Off'}
             onPress={() => setPage('medication')} />}
-          {plus ? <SwitchRow icon="meal" label="Protein target" value={settings.protein?.on === true} onChange={v => commit({ protein: { on: v, perKg: settings.protein?.perKg ?? 1.4 } })} />
-            : <Row icon="meal" label="Protein target" value="Plus" onPress={() => openPaywall('protein')} hint="Part of Tidemark Plus" />}
-          {plus && settings.protein?.on && <Row icon="target" label="Grams per kg" wide right={<Tabs value={String(settings.protein.perKg) as '1.2' | '1.4' | '1.6'} label="Protein per kilogram"
-            options={[{ id: '1.2', label: '1.2' }, { id: '1.4', label: '1.4' }, { id: '1.6', label: '1.6' }]} onChange={v => commit({ protein: { on: true, perKg: Number(v) as 1.2 | 1.4 | 1.6 } })} />} />}
+          {plus ? <SwitchRow icon="meal" label="Protein minimum" value={settings.protein?.on === true} onChange={v => commit({ protein: { on: v, grams: settings.protein?.grams ?? null } })} />
+            : <Row icon="meal" label="Protein minimum" value="Plus" onPress={() => openPaywall('protein')} hint="Part of Tidemark Plus" />}
+          {plus && settings.protein?.on && <Row icon="target" label="Grams a day" wide right={
+            <Input defaultValue={settings.protein.grams != null ? String(settings.protein.grams) : ''} keyboardType="number-pad" placeholder="e.g. 100" maxLength={3}
+              style={{ width: 96, textAlign: 'center' }} accessibilityLabel="Daily protein minimum in grams"
+              onEndEditing={e => commit({ protein: { on: true, grams: cleanProteinGrams(e.nativeEvent.text) } })} />} />}
           {/* Free: a plain row that says it's Plus, not a switch that opens a sales sheet */}
           {plus ? <SwitchRow icon="flame" label="Calorie estimate" value={settings.trackCalories === true} onChange={v => commit({ trackCalories: v })} last />
             : <Row icon="flame" label="Calorie estimate" value="Plus" onPress={() => openPaywall('calories')} hint="Part of Tidemark Plus" last />}
         </Group>
-        <Text style={s.groupFootOut}>{p.health ? 'Apple Health: weights from your scale or other apps come in by themselves, and weights you log here go to Health. A weight you type always wins for its day. ' : ''}Calorie estimate: enter how many calories you ate each day (not burned). After two weeks Tidemark compares that with your trend and estimates how many you burn.</Text>
+        <Text style={s.groupFootOut}>{p.health ? 'Apple Health: weights from your scale or other apps come in by themselves, and weights you log here go to Health. A weight you type always wins for its day. ' : ''}Protein minimum: a daily number you set, for example from your GP, dietitian or prescriber. Tidemark doesn’t work it out for you. Calorie estimate: enter how many calories you ate each day (not burned). After two weeks Tidemark compares that with your trend and estimates how many you burn.</Text>
 
         <Group title="Display" footer="Hide my weight: Tidemark shows which way your trend is going and by how much, never the weight itself. Exports still hold the real numbers.">
           <Row icon="moon" label="Appearance" wide right={<AppearanceToggle value={p.appearance} onChange={p.onAppearanceChange} />} />
@@ -169,7 +172,7 @@ export function SettingsScreen(p: SettingsProps) {
           <Row icon="share" label="Export backup" value={backupDays == null ? 'Never' : backupDays === 0 ? 'Today' : `${backupDays}d ago`} onPress={p.onExport}
             hint="Saves a backup file you can restore later" />
           <Row icon="share" label="Export spreadsheet (CSV)" onPress={p.onExportCsv} />
-          {p.onReport && <Row icon="download" label="Report for your doctor (PDF)" value={plus ? undefined : 'Plus'} onPress={() => (plus ? p.onReport!() : openPaywall('report'))} hint="The last 12 weeks: trend, doses, side effects and notes" />}
+          {p.onReport && <Row icon="download" label="Report for your doctor (PDF)" value={plus ? undefined : p.sampleReportLeft ? '1 free' : 'Plus'} onPress={() => (plus || p.sampleReportLeft ? p.onReport!() : openPaywall('report'))} hint="The last 12 weeks: trend, doses, side effects and notes" />}
           <Row icon="download" label="Restore from backup" onPress={p.onRestore} last />
         </Group>
         {!p.lockAvailable && <Text style={s.groupFootOut}>Set up {p.lockName} or a passcode on this phone to use the lock.</Text>}

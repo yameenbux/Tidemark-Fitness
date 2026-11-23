@@ -5,6 +5,7 @@ import { dailyWeights, entriesFor, fromWeights } from './entries';
 import { cleanDoses, cleanEffects } from './medication';
 import { cleanNotes } from './notes';
 import { cleanProtein } from './protein';
+import { cleanNudgeMemory, NO_NUDGE, type NudgeMemory } from './plusNudge';
 import { cleanReviewAsk, NO_REVIEW_ASK, type ReviewAsk } from './reviewAsk';
 import { cleanMeasurements, cleanPhotos } from './body';
 import { cleanIntake } from './calories';
@@ -28,8 +29,10 @@ export interface Prefs {
   health: { on: boolean; anchor: string | null };   // Apple Health sync, and where the last read got to
   autoBackup: AutoBackup;      // automatic backups into a picked folder (iOS)
   reviewAsk: ReviewAsk;        // when Apple's rating prompt was last asked for, so it's never asked too often
+  plusNudge: NudgeMemory;      // the last Plus card on Today, so the next one waits a week (core/plusNudge.ts)
+  sampleReport: boolean;       // the one free doctor report has been made (without Plus)
 }
-export const DEFAULT_PREFS: Prefs = { lock: false, milestone: 0, milestoneFor: null, reminder: { on: false, hour: 7, minute: 30 }, lastBackup: null, appearance: 'system', length: null, plus: NO_PLUS, hide: false, health: { on: false, anchor: null }, autoBackup: NO_AUTO_BACKUP, reviewAsk: NO_REVIEW_ASK };
+export const DEFAULT_PREFS: Prefs = { lock: false, milestone: 0, milestoneFor: null, reminder: { on: false, hour: 7, minute: 30 }, lastBackup: null, appearance: 'system', length: null, plus: NO_PLUS, hide: false, health: { on: false, anchor: null }, autoBackup: NO_AUTO_BACKUP, reviewAsk: NO_REVIEW_ASK, plusNudge: NO_NUDGE, sampleReport: false };
 
 /** Milestones are quarters of the way from the start weight to the goal, so they belong to those numbers. */
 export const milestonePlanKey = (p: { start: string; startKg: number; goalKg: number }) => `${p.start}|${p.startKg}|${p.goalKg}`;
@@ -52,6 +55,8 @@ export function cleanPrefs(p: any): Prefs {
     health: { on: p.health?.on === true, anchor: typeof p.health?.anchor === 'string' && p.health.anchor.length < 20000 ? p.health.anchor : null },
     autoBackup: cleanAutoBackup(p.autoBackup),
     reviewAsk: cleanReviewAsk(p.reviewAsk),
+    plusNudge: cleanNudgeMemory(p.plusNudge),
+    sampleReport: p.sampleReport === true,
   };
 }
 

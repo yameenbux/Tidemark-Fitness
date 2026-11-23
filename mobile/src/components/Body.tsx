@@ -55,12 +55,17 @@ function LoadingImage({ uri, style, label }: { uri: string; style: ImageStyle; l
   );
 }
 
-/** Free: the waist only (the one measurement that answers "is the trend real?"); the rest and photos are Plus. */
+/** Free: adding the waist (the one measurement that answers "is the trend real?"); adding the rest and photos is Plus. */
 const WAIST_ONLY = MEASURES.filter(m => m.key === 'waist');
 
-export const BodyCard = memo(function BodyCard({ settings, weights, unit, lengthUnit, onLengthUnit, measurements, photos, onMeasurements, onPhotos, waistOnly = false }: {
+/**
+ * Measurements and progress photos. `free` (no Plus): only the waist can be added, but everything already entered,
+ * from a time with Plus, stays on show: what someone recorded is theirs to see, whether or not they pay. `onPlus`
+ * opens Plus from the free version's photo button.
+ */
+export const BodyCard = memo(function BodyCard({ settings, weights, unit, lengthUnit, onLengthUnit, measurements, photos, onMeasurements, onPhotos, free = false, onPlus }: {
   settings: Settings; weights: Weights; unit: Unit; lengthUnit: LengthUnit; onLengthUnit: (u: LengthUnit) => void; measurements: Measurements; photos: PhotoLog;
-  onMeasurements: (m: Measurements) => void; onPhotos: (p: PhotoLog) => void; waistOnly?: boolean;
+  onMeasurements: (m: Measurements) => void; onPhotos: (p: PhotoLog) => void; free?: boolean; onPlus?: () => void;
 }) {
   useScheme();                                   // repaint when the appearance changes (memo skips parent renders)
   const [sheet, setSheet] = useState<null | 'measure' | 'photos'>(null);
@@ -69,8 +74,10 @@ export const BodyCard = memo(function BodyCard({ settings, weights, unit, length
   const [thenKey, setThenKey] = useState<string | null>(null);
   const before = thenKey && dates.includes(thenKey) ? thenKey : dates[0];
   const after = dates[dates.length - 1];
-  const list = waistOnly ? WAIST_ONLY : MEASURES;
-  const summaries = list.map(m => ({ m, s: measureSummary(measurements, m.key) })).filter(x => x.s);
+  const list = free ? WAIST_ONLY : MEASURES;                    // what can be added
+  const summaries = MEASURES.map(m => ({ m, s: measureSummary(measurements, m.key) })).filter(x => x.s);   // what's shown: all of it
+  const anyPhotos = photoDates(photos).length > 0;
+  const photosShown = !free || anyPhotos;
   const series = useMemo(() => trendSeries(weightSeries(settings.plan, weights)), [settings.plan, weights]);
 
   const photoBox = (k: string, label: string) => {
@@ -85,9 +92,10 @@ export const BodyCard = memo(function BodyCard({ settings, weights, unit, length
   };
 
   return (
-    <Card title={waistOnly ? 'Waist' : 'Measurements & photos'} right={<View style={{ flexDirection: 'row', gap: 6 }}>
+    <Card title={free && !anyPhotos && summaries.every(x => x.m.key === 'waist') ? 'Waist' : 'Measurements & photos'} right={<View style={{ flexDirection: 'row', gap: 6 }}>
       <Button icon="plus" label="Measure" kind="ghost" small onPress={() => setSheet('measure')} />
-      {!waistOnly && <Button icon="plus" label="Photos" kind="ghost" small onPress={() => setSheet('photos')} />}
+      {!free ? <Button icon="plus" label="Photos" kind="ghost" small onPress={() => setSheet('photos')} />
+        : anyPhotos && onPlus ? <Button icon="plus" label="Photos · Plus" kind="ghost" small onPress={onPlus} /> : null}
     </View>}>
       {summaries.length > 0 ? (
         <View style={s.chips}>
@@ -107,7 +115,7 @@ export const BodyCard = memo(function BodyCard({ settings, weights, unit, length
         <EmptyState compact icon="ruler" title="No measurements yet" body="Your waist often keeps shrinking in weeks the scale stalls. Measure every 2–4 weeks, same time of day." action="Add a measurement" onAction={() => setSheet('measure')} />
       )}
 
-      {waistOnly ? null : dates.length > 0 || photoDates(photos).length > 0 ? (
+      {!photosShown ? null : anyPhotos ? (
         <View style={{ marginTop: 14 }}>
           <Tabs value={pose} onChange={setPose} label="Photo pose" options={POSES.map(p => ({ id: p.key, label: p.label }))} />
           {dates.length >= 2 ? (
@@ -115,7 +123,7 @@ export const BodyCard = memo(function BodyCard({ settings, weights, unit, length
           ) : dates.length === 1 ? (
             <View style={s.cmp}>{photoBox(dates[0], 'First')}<View style={[s.cmpCol, s.cmpEmpty]}><Text style={s.cmpEmptyTxt}>Take another {POSES.find(p => p.key === pose)!.label.toLowerCase()} photo in a few weeks to compare</Text></View></View>
           ) : (
-            <EmptyState compact icon="body" title={`No ${pose} photos yet`} action="Add photos" onAction={() => setSheet('photos')} />
+            <EmptyState compact icon="body" title={`No ${pose} photos yet`} action={free ? undefined : 'Add photos'} onAction={free ? undefined : () => setSheet('photos')} />
           )}
           {dates.length > 2 && (
             <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 6, paddingTop: 8 }}>

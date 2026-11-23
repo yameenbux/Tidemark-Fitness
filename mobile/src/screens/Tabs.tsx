@@ -183,13 +183,13 @@ export function HabitsTab({ t, settings, series, today, scrollTop, openSettings,
 
 export function BodyTab({ t, settings, series, scrollTop, openSettings, show }: TabProps) {
   const { state, prefs } = t;
-  const { plus } = usePlus();
+  const { plus, openPaywall } = usePlus();
   if (!plus) {
-    // Free: the waist, so the tab is never just a locked door; the rest is Plus
+    // Free: adding the waist, so the tab is never just a locked door, and everything already entered stays on show
     const kept = Object.values(state.measurements).some(d => Object.keys(d).some(k => k !== 'waist')) || Object.keys(state.photos).length > 0 || Object.keys(state.intake).length > 0;
     return (
       <TabScreen eyebrow="Beyond the scale" title="Body" onSettings={() => openSettings()} scrollTop={scrollTop}>
-        <CardBoundary name="Waist"><BodyCard waistOnly settings={settings} weights={state.weights} unit={state.unit} lengthUnit={lengthUnitFor(prefs.length, state.unit)}
+        <CardBoundary name="Waist"><BodyCard free onPlus={() => openPaywall('body')} settings={settings} weights={state.weights} unit={state.unit} lengthUnit={lengthUnitFor(prefs.length, state.unit)}
           onLengthUnit={length => t.setPrefs({ length })} measurements={state.measurements} photos={state.photos}
           onMeasurements={m => { t.setMeasurements(m); success(); }} onPhotos={t.setPhotos} /></CardBoundary>
         <PlusTeaser feature="body" icon="body" kept={kept} title="Hips, chest, arms, photos and calories"

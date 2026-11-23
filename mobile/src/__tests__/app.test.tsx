@@ -61,7 +61,8 @@ test('first run on a weekly injection: the dose log is set up, and Plus is offer
   fireEvent.changeText(screen.getByLabelText('Current dose in milligrams'), '2.5');
   fireEvent.press(screen.getByText('Next'));
   fireEvent.press(await screen.findByText('Start tracking'));
-  expect(await screen.findByText(/^Your plan is ready, and everything in it stays free\./)).toBeTruthy();
+  expect(await screen.findByText('Your plan is ready. Want the full picture?')).toBeTruthy();
+  expect(screen.getByText(/^Everything in your plan stays free./)).toBeTruthy();
   const lines = screen.getAllByText(/^(If you take|A PDF report|Progress photos|Up to 6|Log what you eat|A daily protein|Password-protected)/).map(n => n.props.children);
   expect(lines[0]).toMatch(/^If you take a weight-loss medication/);           // what they came for, first
   expect(lines[1]).toBe('A PDF report for your doctor or nurse');

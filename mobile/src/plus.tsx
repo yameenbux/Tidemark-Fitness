@@ -2,12 +2,12 @@
 import { createContext, ReactNode, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { AppState } from 'react-native';
 import { Paywall } from './components/Paywall';
-import { plusActive, PlusAudience, PlusFeature, PlusStatus } from './core/plus';
+import { plusActive, PLUS_PRODUCTS, PlusAudience, PlusFeature, PlusStatus } from './core/plus';
 import { FEATURES } from './features';
 import { checkPlus, manageSubscription, onStoreUpdates, restore as restoreStore, storeAvailable } from './purchases';
 import { notify } from './dialogs';
 import { success } from './feel';
-import { scheduleTrialReminder } from './reminders';
+import { scheduleTrialReminder, syncRenewalReminder } from './reminders';
 
 interface PlusApi {
   plus: boolean;                 // Plus features are unlocked
@@ -55,7 +55,10 @@ export function PlusProvider({ status, onStatus, locked, audience = 'general', w
   // Ask Apple on launch and each time the app comes back: subscriptions renew, lapse and get refunded off-device
   useEffect(() => {
     if (!storeAvailable) return;
-    const refresh = () => { setNow(Date.now()); checkPlus().then(s => { if (s) onStatus(s); }).catch(() => {}); };
+    const refresh = () => {
+      setNow(Date.now());
+      checkPlus().then(s => { if (s) { onStatus(s); syncRenewalReminder(s, PLUS_PRODUCTS.yearly).catch(() => {}); } }).catch(() => {});
+    };
     refresh();
     const sub = AppState.addEventListener('change', st => { if (st === 'active') refresh(); });
     const off = onStoreUpdates(

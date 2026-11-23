@@ -207,11 +207,14 @@ describe('progression and CSV', () => {
   });
   test('CSV has one row per date with blanks where nothing was logged', () => {
     expect(toCsv({ '2026-10-01': 90.5 }, { '2026-10-02': { waist: 95 } }, { '2026-10-01': 1900 }))
-      .toBe('date,weight_kg,waist_cm,hips_cm,chest_cm,arm_cm,kcal,tags,note\n2026-10-01,90.5,,,,,1900,,\n2026-10-02,,95,,,,,,\n');
+      .toBe('date,weight_kg,waist_cm,hips_cm,chest_cm,arm_cm,kcal,protein_g,tags,note\n2026-10-01,90.5,,,,,1900,,,\n2026-10-02,,95,,,,,,,\n');
+  });
+  test('CSV carries protein grams, so a log kept with Plus is never stuck in the app', () => {
+    expect(toCsv({}, {}, {}, {}, { '2026-10-03': 120 }).split('\n')[1]).toBe('2026-10-03,,,,,,,120,,');
   });
   test('CSV carries tags and a note, quoted, and never as a spreadsheet formula', () => {
     const csv = toCsv({ '2026-10-01': 90.5 }, {}, {}, { '2026-10-01': { tags: ['salty', 'alcohol'], text: '=HYPERLINK("x") "party"' } });
-    expect(csv.split('\n')[1]).toBe(`2026-10-01,90.5,,,,,,salty;alcohol,"'=HYPERLINK(""x"") ""party"""`);
+    expect(csv.split('\n')[1]).toBe(`2026-10-01,90.5,,,,,,,salty;alcohol,"'=HYPERLINK(""x"") ""party"""`);
   });
 });
 

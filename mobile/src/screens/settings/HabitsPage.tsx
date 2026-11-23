@@ -43,7 +43,7 @@ export function HabitsPage({ settings, onSave, onBack }: { settings: Settings; o
             <Input value={h.name} onChangeText={v => setHabit(i, { name: v.replace(/\n/g, ' ') })} style={s.habitName} placeholder="Name, e.g. Walk after dinner"
               accessibilityLabel={`Habit ${i + 1} name`} multiline scrollEnabled={false} blurOnSubmit returnKeyType="done" maxLength={40} />
             <HabitAmount habit={h} onChange={nh => setHabit(i, { name: nh.name })} />
-            {!plus && i >= FREE_HABITS && <Text style={s.hint}>Hidden on the free version (its ticks are kept). Shows again with Plus.</Text>}
+            {!plus && i >= FREE_HABITS && <Text style={s.hint}>Can’t be ticked on the free version. Its history stays on the Habits tab; ticking it again is Plus.</Text>}
             {picking === h.id && (
               <View style={s.iconGrid} accessibilityRole="radiogroup" accessibilityLabel={`Icon for ${h.name || `habit ${i + 1}`}`}>
                 {HABIT_ICONS.map(([name, label]) => {

@@ -56,6 +56,18 @@ describe('buying Plus', () => {
     await act(async () => { fireEvent.press(screen.getByText('Buy for £49.99')); });
     expect(N.requestPurchase).toHaveBeenLastCalledWith(expect.objectContaining({ type: 'in-app', request: expect.objectContaining({ apple: { sku: PLUS_PRODUCTS.lifetime } }) }));
   });
+  test('the headline speaks to what the person came for; lifetime is a smaller choice below the two subscriptions', async () => {
+    const { Paywall } = jest.requireActual('../components/Paywall');
+    const { rerender } = render(<Paywall reason={null} audience="medication" onClose={jest.fn()} onRestore={jest.fn()} />);
+    expect(await screen.findByText('See what each dose is doing')).toBeTruthy();
+    expect(screen.getAllByRole('radio').map(r => r.props.accessibilityLabel.split(',')[0])).toEqual(['Yearly', 'Monthly', 'Lifetime']);
+    expect(screen.getByText(/^Or pay once: /)).toBeTruthy();
+    rerender(<Paywall reason="report" audience="medication" onClose={jest.fn()} onRestore={jest.fn()} />);
+    expect(screen.getByText('Take a clear record to your appointment')).toBeTruthy();
+    rerender(<Paywall reason={null} audience="general" onClose={jest.fn()} onRestore={jest.fn()} />);
+    expect(screen.getByText('See the change beyond the scale')).toBeTruthy();
+    expect(screen.getByText(/what you enter stays yours, with or without Plus/)).toBeTruthy();
+  });
   test('no saving badge when the store gives no numeric prices', async () => {
     N.fetchProducts.mockImplementation(async ({ type }: { type: string }) => type === 'subs'
       ? [{ ...product(PLUS_PRODUCTS.monthly, '£3.99', true), price: undefined }, { ...product(PLUS_PRODUCTS.yearly, '£19.99', true), price: undefined }]

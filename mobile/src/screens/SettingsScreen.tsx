@@ -15,7 +15,7 @@ import { DoneWindow } from '../components/KeyboardDone';
 import { askPassword, notify } from '../dialogs';
 import { success } from '../feel';
 import { FEATURES, WEB_PREVIEW } from '../features';
-import { APP_STORE_ID, PRIVACY_URL, SUPPORT_EMAIL } from '../support';
+import { APP_STORE_ID, INTENDED_PURPOSE, PRIVACY_URL, SUPPORT_EMAIL } from '../support';
 import { writeReviewUrl } from '../core/reviewAsk';
 import { PaywallSlot, usePlus } from '../plus';
 import { PLUS_PRODUCTS } from '../core/plus';
@@ -197,7 +197,7 @@ export function SettingsScreen(p: SettingsProps) {
             }} />}
           <Row icon="info" label="Version" value={build ? `${version} (${build})` : version} last />
         </Group>
-        <Text style={[s.groupFootOut, { textAlign: 'center', marginTop: 4 }]}>Tidemark · the scale jumps, your trend doesn’t{'\n'}Targets and estimates are guidance, not medical advice.</Text>
+        <Text style={[s.groupFootOut, { textAlign: 'center', marginTop: 4 }]}>Tidemark · the scale jumps, your trend doesn’t{'\n\n'}{INTENDED_PURPOSE} Estimates are general guidance, not medical advice.</Text>
       </ScrollView>
     </View>
     {page !== 'root' && <Pushed key={page} onBack={back} leaving={leaving} onGone={gone}>{subPage()}</Pushed>}

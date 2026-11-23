@@ -190,7 +190,7 @@ describe('free waist', () => {
   test('logging the waist keeps hips and chest measured with Plus', async () => {
     const day = dateKey(today);
     const onMeasurements = jest.fn();
-    render(<BodyCard waistOnly settings={settings} weights={{}} unit="kg" lengthUnit="cm" onLengthUnit={jest.fn()} photos={{}} onPhotos={jest.fn()}
+    render(<BodyCard free settings={settings} weights={{}} unit="kg" lengthUnit="cm" onLengthUnit={jest.fn()} photos={{}} onPhotos={jest.fn()}
       measurements={{ [day]: { hips: 100, chest: 98 } }} onMeasurements={onMeasurements} />);
     expect(screen.queryByText('Photos')).toBeNull();                              // photos stay Plus
     fireEvent.press(screen.getByText('Measure'));
@@ -199,6 +199,15 @@ describe('free waist', () => {
     fireEvent.press(screen.getByText('Save'));
     await waitFor(() => expect(onMeasurements).toHaveBeenCalled());
     expect(onMeasurements.mock.calls[0][0][day]).toEqual({ waist: 88, hips: 100, chest: 98 });
+  });
+  test('without Plus, everything measured or photographed with Plus stays on show; only adding more is Plus', () => {
+    const onPlus = jest.fn();
+    render(<BodyCard free onPlus={onPlus} settings={settings} weights={{}} unit="kg" lengthUnit="cm" onLengthUnit={jest.fn()}
+      photos={{ [dateKey(today)]: { front: 'a.jpg' } }} onPhotos={jest.fn()} measurements={{ [dateKey(today)]: { hips: 100, chest: 98 } }} onMeasurements={jest.fn()} />);
+    expect(screen.getByLabelText('Hips 100.0 cm')).toBeTruthy();              // measured with Plus, still shown
+    expect(screen.getByLabelText(/^First photo, /)).toBeTruthy();               // the photo too
+    fireEvent.press(screen.getByText('Photos · Plus'));                         // adding another is Plus
+    expect(onPlus).toHaveBeenCalled();
   });
 });
 

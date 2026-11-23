@@ -153,3 +153,25 @@ export function onReminderTap(onLog: () => void, onDose: () => void = () => {}):
 }
 
 export const timeLabel = (h: number, m: number) => `${h % 12 === 0 ? 12 : h % 12}:${String(m).padStart(2, '0')} ${h < 12 ? 'am' : 'pm'}`;
+
+const TRIAL_ID = 'plus-trial-ending';
+export const TRIAL_NOTICE_DAYS = 2;
+/**
+ * A free trial of Plus has started: one reminder two days before it becomes paid, as the paywall's timeline says.
+ * Only if the person allows notifications (asked here if they haven't been). Says nothing about their health.
+ */
+export async function scheduleTrialReminder(endsAt: number, now: number = Date.now()): Promise<boolean> {
+  if (Platform.OS === 'web') return false;
+  const at = new Date(endsAt - TRIAL_NOTICE_DAYS * 86400000);
+  at.setHours(10, 0, 0, 0);
+  if (at.getTime() <= now || !(await allowReminders())) return false;
+  try {
+    await Notifications.cancelScheduledNotificationAsync(TRIAL_ID).catch(() => {});
+    await Notifications.scheduleNotificationAsync({
+      identifier: TRIAL_ID,
+      content: { title: 'Your Plus trial ends in 2 days', body: 'After that, Plus is charged to your Apple ID. To cancel, open iPhone Settings › your name › Subscriptions.', data: { action: 'plus' } },
+      trigger: { type: Notifications.SchedulableTriggerInputTypes.DATE, date: at },
+    });
+    return true;
+  } catch { return false; }
+}

@@ -11,6 +11,7 @@ import { TidemarkIcon } from './Logo';
 import { Tap } from './Motion';
 import { Sheet } from './Sheet';
 import { ShinyButton } from './ShinyButton';
+import { TRIAL_NOTICE_DAYS } from '../reminders';
 
 const PLAN_TEXT: Record<PlusPlan, { name: string; per: string }> = {
   yearly: { name: 'Yearly', per: 'a year' },
@@ -125,6 +126,22 @@ export function Paywall({ reason, audience = 'general', welcome, onClose, onRest
             );
           })}
         </View>
+        {chosen?.trialDays && chosen.trialDays > TRIAL_NOTICE_DAYS && plan !== 'lifetime' ? (
+          // How the trial works, step by step: knowing when they'd be charged makes people more willing to start one
+          <View style={s.timeline} accessibilityRole="list" accessibilityLabel="How the free trial works">
+            {[
+              ['Today', 'Every Plus feature unlocks. Nothing to pay.'],
+              [`Day ${chosen.trialDays - TRIAL_NOTICE_DAYS}`, 'A reminder that your trial ends in 2 days, if you allow notifications.'],
+              [`Day ${chosen.trialDays}`, `${chosen.price} ${PLAN_TEXT[plan].per} starts, unless you cancel before.`],
+            ].map(([when, what], i) => (
+              <View key={when} style={s.step} accessible accessibilityLabel={`${when}: ${what}`}>
+                <View style={[s.stepDot, i === 0 && s.stepDotOn]} />
+                <Text style={s.stepWhen}>{when}</Text>
+                <Text style={s.stepWhat}>{what}</Text>
+              </View>
+            ))}
+          </View>
+        ) : null}
         {chosen && <Text style={s.summary}>{summary(chosen)}</Text>}
         <Text style={s.terms}>
           {plan === 'lifetime'
@@ -157,6 +174,12 @@ const s = themed(() => StyleSheet.create({
   cardName: { fontFamily: F.bodySemi, fontSize: 13, color: C.inkSoft },
   cardPrice: { fontFamily: F.display, fontSize: 22, color: C.ink },
   small: { fontFamily: F.body, fontSize: 12.5, color: C.inkSoft },
+  timeline: { marginTop: 18, gap: 8, paddingHorizontal: 6 },
+  step: { flexDirection: 'row', alignItems: 'flex-start', gap: 10 },
+  stepDot: { width: 10, height: 10, borderRadius: 5, marginTop: 5, borderWidth: 2, borderColor: C.coralInk },
+  stepDotOn: { backgroundColor: C.coralInk },
+  stepWhen: { fontFamily: F.bodySemi, fontSize: 13.5, color: C.ink, width: 52 },
+  stepWhat: { flex: 1, fontFamily: F.body, fontSize: 13.5, color: C.inkSoft, lineHeight: 18 },
   summary: { fontFamily: F.bodySemi, fontSize: 14, color: C.ink, textAlign: 'center', marginTop: 14, lineHeight: 19 },
   loading: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10, marginTop: 26 },
   notice: { fontFamily: F.body, fontSize: 14, color: C.inkSoft, marginTop: 22, lineHeight: 20, textAlign: 'center' },

@@ -1,15 +1,24 @@
 import { StyleSheet, Text, View } from 'react-native';
 import { dateKey } from '../core/dates';
-import { addProtein, proteinTarget, proteinWeek, type ProteinLog } from '../core/protein';
+import { addProtein, proteinWeek, type ProteinLog } from '../core/protein';
 import type { Settings } from '../core/types';
 import { tick } from '../feel';
 import { C, F, themed } from '../theme';
 import { Button, Card } from './ui';
 
-/** Plus: today's protein against a daily minimum, added in quick steps (a chicken breast is about 30 g). */
-export function ProteinCard({ settings, trendKg, log, onChange }: { settings: Settings; trendKg: number; log: ProteinLog; onChange: (l: ProteinLog) => void }) {
+/**
+ * Plus: today's protein against the daily minimum the person set, added in quick steps (a chicken breast is about
+ * 30 g). Until they've set one, the card asks for it rather than suggesting a number.
+ */
+export function ProteinCard({ settings, log, onChange, onSetTarget }: { settings: Settings; log: ProteinLog; onChange: (l: ProteinLog) => void; onSetTarget: () => void }) {
   const day = dateKey(new Date());
-  const target = proteinTarget(trendKg, settings.plan.goalKg, settings.protein?.perKg);
+  const target = settings.protein?.grams ?? null;
+  if (target == null) return (
+    <Card title="Protein">
+      <Text style={s.foot}>Set the daily minimum you’re aiming for, for example one your GP, dietitian or prescriber suggested, and Tidemark tracks each day against it.</Text>
+      <View style={s.row}><Button label="Set my daily minimum" kind="ghost" small onPress={onSetTarget} /></View>
+    </Card>
+  );
   const g = log[day] ?? 0;
   const pct = Math.min(100, Math.round(g / Math.max(1, target) * 100));
   const week = proteinWeek(log, target);
@@ -27,7 +36,7 @@ export function ProteinCard({ settings, trendKg, log, onChange }: { settings: Se
       <Text style={s.foot}>
         {g >= target ? 'Today’s minimum reached. ' : ''}
         {week.logged ? `Last 7 days: reached on ${week.reached} of ${week.logged} logged day${week.logged === 1 ? '' : 's'}. ` : ''}
-        A minimum, not a limit: {settings.protein?.perKg ?? 1.4} g per kg of {settings.plan.goalKg < trendKg ? 'your goal weight' : 'your weight'}, which helps keep muscle while you lose fat.
+        A minimum you set, not a limit. Change it in Settings.
       </Text>
     </Card>
   );

@@ -62,7 +62,13 @@ introductory offer: the £11.99 launch price, then a 7-day free trial) and `com.
   never imported back. A typed weight wins for its day. Uses `@kingstinct/react-native-healthkit` (no official Expo
   module exists); needs a development or App Store build.
 - **Doctor report** (Plus, `src/core/report.ts`): the last 12 weeks as a PDF made on the phone with `expo-print`.
-- **Protein minimum** (Plus, `src/core/protein.ts`): 1.2–1.6 g per kg of the lower of trend and goal weight.
+- **When the free version mentions Plus** (`src/core/plusNudge.ts`): once after setup, on tapping a Plus feature, and
+  at most one card a week on Today at a moment that matters: a new dose strength, three flat weeks, a first free
+  doctor report, a first progress photo, or a milestone. Never in the first three days, never after a weigh-in that
+  went up or a side effect noted today or yesterday, and never twice for the same occasion. A free trial gets one local
+  reminder two days before it's paid, if notifications are allowed.
+- **Protein minimum** (Plus, `src/core/protein.ts`): a daily number of grams the person sets (for example from their GP
+  or dietitian). Tidemark never works it out from body weight: that would edge towards clinical advice (see COMPLIANCE.md).
 - **Settings**: an iOS grouped list — plan and breaks, event, units, habits, sessions, meals, calories, a daily weigh-in
   reminder, Face ID lock, automatic backup, export (backup or CSV), restore, clear, erase everything, privacy policy.
 - **Safety**: saved data that can't be read is copied aside rather than overwritten; a snapshot is taken before restore;

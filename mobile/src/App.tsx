@@ -194,8 +194,12 @@ function Main() {
     if (ok) { t.setSettings({ ...settings, plan: next }); success(); show({ message: 'New line from today' }); }
   };
   // Plus: a PDF for a doctor or nurse, made on the phone and shared where the person chooses
+  // Without Plus, the first report is free: someone can see exactly what they'd be paying for before they pay
   const report = async () => {
-    try { await shareReport({ settings, series, unit: state.unit, doses: state.doses, effects: state.effects, measurements: state.measurements, notes: state.notes }); }
+    try {
+      await shareReport({ settings, series, unit: state.unit, doses: state.doses, effects: state.effects, measurements: state.measurements, notes: state.notes });
+      if (!plusOn && !prefs.sampleReport) { t.setPrefs({ sampleReport: true }); show({ message: 'That was your free report. With Plus, make one whenever you need it.' }); }
+    }
     catch (e) { notify('Couldn’t make the report', e instanceof Error ? e.message : 'Please try again.'); }
   };
   const hold = async (next: Settings['plan']) => {
@@ -222,7 +226,7 @@ function Main() {
           <TodayNotices t={t} lockLost={lock.lockLost} onLockLostDismiss={lock.dismissLockLost} backupHidden={backupHidden}
             onBackupHide={() => setBackupHidden(true)} onExport={data.exportData} onRestore={data.restore} onExportRescued={data.exportRescued}
             pendingPlan={pendingPlan} onSavePending={() => { if (pendingPlan) { t.setSettings({ ...settings, plan: pendingPlan }); success(); show({ message: 'Plan saved' }); } setPendingPlan(null); }}
-            onDiscardPending={() => setPendingPlan(null)} />} />)}
+            onDiscardPending={() => setPendingPlan(null)} series={series} onReport={report} />} />)}
         {pane('trend', <TrendTab {...props} scrollTop={top('trend')} onReplan={replan} onHold={hold} onReport={report} onEdit={k => setLog({ key: k, n: Date.now() })} />)}
         {pane('habits', <HabitsTab {...props} scrollTop={top('habits')} onLogSession={(k, dow) => setLift({ k, dow })} />)}
         {pane('body', <BodyTab {...props} scrollTop={top('body')} />)}
@@ -249,7 +253,7 @@ function Main() {
               reminder={prefs.reminder} onReminderChange={setReminder} lastBackup={prefs.lastBackup}
               appearance={prefs.appearance} onAppearanceChange={a => t.setPrefs({ appearance: a })}
               hideWeight={prefs.hide} onHideWeightChange={hide => t.setPrefs({ hide })}
-              health={health.available ? { on: health.on, set: health.setHealth } : undefined} onReport={report} autoBackup={autoBackup.available ? autoBackup : undefined} reminderBlocked={prefs.reminder.on && notifBlocked}
+              health={health.available ? { on: health.on, set: health.setHealth } : undefined} onReport={report} sampleReportLeft={!prefs.sampleReport} autoBackup={autoBackup.available ? autoBackup : undefined} reminderBlocked={prefs.reminder.on && notifBlocked}
               weighIns={Object.keys(state.weights).length} weights={state.weights} onPlanLeftUnsaved={setPendingPlan}
               doses={state.doses ?? {}} onDoses={t.setDoses}
               lengthUnit={lengthUnitFor(prefs.length, state.unit)} onLengthUnit={length => t.setPrefs({ length })}

@@ -7,6 +7,7 @@ import { FEATURES } from './features';
 import { checkPlus, manageSubscription, onStoreUpdates, restore as restoreStore, storeAvailable } from './purchases';
 import { notify } from './dialogs';
 import { success } from './feel';
+import { scheduleTrialReminder } from './reminders';
 
 interface PlusApi {
   plus: boolean;                 // Plus features are unlocked
@@ -58,7 +59,13 @@ export function PlusProvider({ status, onStatus, locked, audience = 'general', w
     refresh();
     const sub = AppState.addEventListener('change', st => { if (st === 'active') refresh(); });
     const off = onStoreUpdates(
-      s => { onStatus(s); if (s.active) { setPaywall(null); success(); } },
+      s => {
+        onStatus(s);
+        if (!s.active) return;
+        setPaywall(null); success();
+        // A free trial: no real Plus period is under ten days, so this one ends with the trial. Remind before it's paid
+        if (s.expires != null && s.expires - Date.now() < 10 * 86400000) scheduleTrialReminder(s.expires).catch(() => {});
+      },
       (message, kind) => {
         if (kind === 'pending') notify('Waiting for approval', 'Plus will unlock once the purchase is approved.');
         else if (kind === 'failed') notify('Purchase didn’t complete', message);

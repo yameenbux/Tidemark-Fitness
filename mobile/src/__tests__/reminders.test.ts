@@ -1,5 +1,5 @@
 import * as Notifications from 'expo-notifications';
-import { applyDoseReminders, applyReminder, reminderBudget, remindersSetUntil } from '../reminders';
+import { applyDoseReminders, applyReminder, reminderBudget, remindersSetUntil, scheduleTrialReminder } from '../reminders';
 import type { Medication } from '../core/types';
 
 // What iOS has scheduled, kept in memory so each sync sees the last one's result
@@ -60,5 +60,22 @@ describe('sharing iOS’s 64-notification limit', () => {
     expect(remindersSetUntil(r, daily, {}, false, now)!.getMonth()).toBe(10);              // 28 days: early Nov
     expect(remindersSetUntil(r, daily, {}, false, now)!.getDate()).toBe(4);
     expect(remindersSetUntil({ ...r, on: false }, { ...daily, remind: false }, {}, false, now)).toBeNull();
+  });
+});
+
+describe('the free-trial reminder', () => {
+  test('one reminder, at 10am two days before the trial is paid, saying nothing about health', async () => {
+    const now = new Date(2026, 10, 23, 12).getTime(), ends = new Date(2026, 10, 30, 12).getTime();
+    expect(await scheduleTrialReminder(ends, now)).toBe(true);
+    const t = pending.find(n => n.identifier === 'plus-trial-ending')!;
+    expect(t.trigger.date).toEqual(new Date(2026, 10, 28, 10));
+    expect(JSON.stringify(t.content)).not.toMatch(/kg|lb|dose|weight/i);
+    await scheduleTrialReminder(ends, now);                               // a second purchase event doesn't double it
+    expect(pending.filter(n => n.identifier === 'plus-trial-ending')).toHaveLength(1);
+  });
+  test('none when that moment has already passed', async () => {
+    const now = new Date(2026, 10, 29, 12).getTime(), ends = new Date(2026, 10, 30, 12).getTime();
+    expect(await scheduleTrialReminder(ends, now)).toBe(false);
+    expect(pending).toHaveLength(0);
   });
 });

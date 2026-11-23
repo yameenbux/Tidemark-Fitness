@@ -59,9 +59,9 @@ describe('medication cards', () => {
     render(<MedicationTrend med={med} doses={{ '2026-09-01': { mg: 1 }, '2026-09-15': { mg: 1.7 } }}
       series={[pt('2026-09-01', 100), pt('2026-09-15', 99)]} unit="kg" onUnlock={onUnlock} effects={{ '2026-09-02': { effects: ['nausea'], severity: 1 } }} />);
     expect(screen.getByText(/1 mg · from 1 Sep/)).toBeTruthy();                 // their real doses
-    expect(screen.queryByText(/kg/)).toBeNull();                                // but no result, anywhere
-    expect(screen.getAllByText('•••')).toHaveLength(2);
-    expect(screen.getByLabelText(/1 mg from .*trend change shown with Plus/)).toBeTruthy();
+    expect(screen.getAllByText(/kg/)).toHaveLength(1);                          // the first dose's result, for real…
+    expect(screen.getAllByText('•••')).toHaveLength(1);                         // …and the latest one locked
+    expect(screen.getByLabelText(/1\.7 mg from .*trend change shown with Plus/)).toBeTruthy();
     expect(screen.queryByText('Nausea')).toBeNull();                            // side-effect patterns are Plus too
     expect(screen.getByText(/^1 side effect noted\./)).toBeTruthy();
     expect(screen.queryByText('Report for your doctor')).toBeNull();

@@ -22,8 +22,8 @@ import { Button, Card } from './ui';
 const change = (kg: number, unit: Unit) => showChange(kg, unit, 1);   // one decimal for every kg change, app-wide
 
 /** Calm note when the trend passes another quarter of the way to goal. Shown once per milestone. */
-export function MilestoneBanner({ quarter, settings, trendNow, unit, onDismiss }: {
-  quarter: number; settings: Settings; trendNow: number; unit: Unit; onDismiss: () => void;
+export function MilestoneBanner({ quarter, settings, trendNow, unit, onDismiss, onPhoto }: {
+  quarter: number; settings: Settings; trendNow: number; unit: Unit; onDismiss: () => void; onPhoto?: () => void;   // onPhoto: without Plus
 }) {
   const lost = settings.plan.startKg - trendNow;   // the real figure, not the rounded quarter
   return (
@@ -38,6 +38,7 @@ export function MilestoneBanner({ quarter, settings, trendNow, unit, onDismiss }
               ? `Your trend is more than ${['', 'a quarter', 'half', 'three quarters'][quarter]} of the way from where you started. That's real change, not a good day on the scale.`
               : `Your trend has moved ${showAmount(Math.abs(lost), unit)} ${lost >= 0 ? 'down' : 'up'} from where you started. That's real change, not a good day on the scale.`}
         </Text>
+        {onPhoto && <Pressable onPress={onPhoto} accessibilityRole="button" style={s.milePlus}><Text style={s.milePlusTxt}>Mark it with a progress photo · Plus</Text></Pressable>}
       </View>
       <Pressable onPress={onDismiss} hitSlop={13} accessibilityRole="button" accessibilityLabel="Dismiss milestone"><Icon name="close" size={18} color={C.inkSoft} /></Pressable>
     </View>
@@ -142,7 +143,7 @@ export function CaloriesCard({ settings, weights, intake, onChange, trend }: {
           : needsWeighIns ? <>There aren’t weigh-ins near both ends of the last {CAL_WINDOW} days, so Tidemark can’t see how your trend really moved. Weigh in for the next couple of weeks and the estimate comes back.</>
           : <>Log what you eat on {CAL_MIN_DAYS} of the last {CAL_WINDOW} days. Tidemark then compares it with how your trend moved and estimates how much you burn a day, from your own data rather than a formula.</>}
       </Text>
-      {est && <Text style={s.foot}>A range, because some of what you lose is water and muscle, not just fat. Only as accurate as the logging: forgotten snacks make it low. An estimate, not medical advice: talk to a GP or dietitian before big changes.</Text>}
+      {est && <Text style={s.foot}>How it’s worked out: your average eaten, plus your trend’s change in kg × 5,500–7,700 kcal, spread over the days. A range, because some of what you lose is water and muscle, not just fat. Only as accurate as the logging: forgotten snacks make it low. An estimate, not medical advice: talk to a GP or dietitian before big changes.</Text>}
     </Card>
   );
 }
@@ -215,6 +216,8 @@ const s = themed(() => StyleSheet.create({
   err: { fontFamily: F.bodySemi, fontSize: 13.5, color: C.danger, marginTop: 8, lineHeight: 19, paddingHorizontal: 4 },
   mileTitle: { fontFamily: F.display, fontSize: 16, color: C.ink },
   mileTxt: { fontFamily: F.body, fontSize: 14, color: C.inkSoft, lineHeight: 19, marginTop: 3 },
+  milePlus: { minHeight: 44, justifyContent: 'center', alignSelf: 'flex-start' },
+  milePlusTxt: { fontFamily: F.bodySemi, fontSize: 14, color: C.coralInk },
   muted: { fontFamily: F.body, fontSize: 13.5, color: C.inkSoft, lineHeight: 18, paddingHorizontal: 4 },
   ask: { fontFamily: F.bodySemi, fontSize: 14.5, color: C.ink, paddingHorizontal: 4, marginBottom: 8 },
   pat: { paddingHorizontal: 4, paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: C.line },

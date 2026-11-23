@@ -3,6 +3,7 @@ import { usableHabits } from '../core/plus';
 import { usePlus } from '../plus';
 import { CardBoundary } from '../components/States';
 import { ProteinCard } from '../components/Protein';
+import { PlusNudgeCard } from '../components/PlusNudge';
 import { EffectsSheet, MedicationToday, MedicationTrend } from '../components/Medication';
 import { isDue, missedDose } from '../core/medication';
 import { FEATURES } from '../features';
@@ -55,7 +56,7 @@ function lengthChange(cm: number, unit: LengthUnit) {
 export function TodayTab(props: TabProps & { notices: React.ReactNode; onLog: (day?: string) => void }) {
   const { t, settings, series, rate, scrollTop, openSettings, go, notices, onLog } = props;
   const { state, prefs } = t;
-  const { plus } = usePlus();
+  const { plus, storeAvailable, openPaywall } = usePlus();
   const unit = state.unit, lu = lengthUnitFor(prefs.length, state.unit);
   const now = new Date();
   const todayKey = dateKey(now);
@@ -98,7 +99,8 @@ export function TodayTab(props: TabProps & { notices: React.ReactNode; onLog: (d
       {/* A dose due today is the next job after the daily ticks (weekly, so it doesn't push the list down) */}
       {med && doseToday && <CardBoundary name="Medication"><MedicationToday med={med} doses={doseLog} onChange={t.setDoses} onHistory={() => openSettings('medication')} plus={plus} onEffects={() => setFeel(true)} /></CardBoundary>}
       {quarter > celebrated && trendNow != null && (
-        <MilestoneBanner quarter={quarter} settings={settings} trendNow={trendNow} unit={unit} onDismiss={() => t.setPrefs({ milestone: quarter, milestoneFor: planKey })} />
+        <MilestoneBanner quarter={quarter} settings={settings} trendNow={trendNow} unit={unit} onDismiss={() => t.setPrefs({ milestone: quarter, milestoneFor: planKey })}
+          onPhoto={plus || !storeAvailable ? undefined : () => openPaywall('body')} />
       )}
       {/* This week across the full width: the trend through each of the last seven days, each labelled */}
       <CardBoundary name="This week">
@@ -137,7 +139,7 @@ export function TodayTab(props: TabProps & { notices: React.ReactNode; onLog: (d
       )}
       {med && !doseToday && <CardBoundary name="Medication"><MedicationToday med={med} doses={doseLog} onChange={t.setDoses} onHistory={() => openSettings('medication')} plus={plus} onEffects={() => setFeel(true)} /></CardBoundary>}
       {feel && <EffectsSheet day={props.today} effects={state.effects ?? {}} onSave={t.setEffects} onClose={() => setFeel(false)} />}
-      {plus && settings.protein?.on && trendNow != null && <CardBoundary name="Protein"><ProteinCard settings={settings} trendKg={trendNow} log={state.protein ?? {}} onChange={t.setProtein} /></CardBoundary>}
+      {plus && settings.protein?.on && <CardBoundary name="Protein"><ProteinCard settings={settings} log={state.protein ?? {}} onChange={t.setProtein} onSetTarget={() => openSettings()} /></CardBoundary>}
       <CardBoundary name="Your event"><EventCard settings={settings} /></CardBoundary>
       {isValidElement<{ part?: string }>(notices) ? cloneElement(notices, { part: 'nudge' }) : null}
     </TabScreen>
@@ -210,11 +212,12 @@ export function BodyTab({ t, settings, series, scrollTop, openSettings, show }: 
 }
 
 /** Notices shown at the top of Today: unreadable data, failing saves, a lock that switched itself off, backups. */
-export function TodayNotices({ part = 'urgent', t, lockLost, onLockLostDismiss, backupHidden, onBackupHide, onExport, onRestore, onExportRescued, pendingPlan, onSavePending, onDiscardPending }: {
+export function TodayNotices({ part = 'urgent', t, lockLost, onLockLostDismiss, backupHidden, onBackupHide, onExport, onRestore, onExportRescued, pendingPlan, onSavePending, onDiscardPending, series = [], onReport }: {
   part?: 'urgent' | 'nudge';   // urgent notices sit above the weight; the backup nudge waits at the bottom of Today
   t: Tracker; lockLost: boolean; onLockLostDismiss: () => void; backupHidden: boolean; onBackupHide: () => void;
   onExport: () => void; onRestore: () => void; onExportRescued: () => void;
   pendingPlan: Settings['plan'] | null; onSavePending: () => void; onDiscardPending: () => void;
+  series?: TrendPoint[]; onReport?: () => void;   // for the Plus card that shares the bottom slot
 }) {
   const { prefs, state } = t;
   const lastBackupDays = daysSince(prefs.lastBackup);
@@ -228,7 +231,9 @@ export function TodayNotices({ part = 'urgent', t, lockLost, onLockLostDismiss, 
     action="Export a backup" onAction={onExport} onDismiss={onBackupHide} /> : null;
   if (part === 'nudge') return showBackup ? <Notice icon="download" title={lastBackupDays == null ? 'Make your first backup' : `Last backup ${lastBackupDays} days ago`}
     body="Your data lives only on this phone. A backup file kept somewhere safe off this phone means a lost phone isn’t lost data."
-    action="Back up now" onAction={onExport} onDismiss={onBackupHide} /> : null;
+    action="Back up now" onAction={onExport} onDismiss={onBackupHide} />
+    // The slot is free: a Plus card, if this is a good moment for one (keeping a backup comes first)
+    : urgent ? null : <PlusNudgeCard t={t} series={series} onReport={onReport} />;
   return (
     <>
       {t.recovered && (

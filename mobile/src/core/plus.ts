@@ -24,7 +24,7 @@ export const PLUS_PERKS: { feature: PlusFeature; title: string; line: string }[]
   { feature: 'protein', title: 'The protein target', line: 'A daily protein minimum to aim for' },
   { feature: 'report', title: 'The report for your doctor', line: 'A PDF report for your doctor or nurse' },
   { feature: 'protectedBackups', title: 'Password-protected backup', line: 'Password-protected backups' },
-  { feature: 'medication', title: 'Medication insights', line: 'If you take a weight-loss medication: your trend at each dose, and side effects' },
+  { feature: 'medication', title: 'Medication insights', line: 'If you take a weight-loss medication: your trend at each dose and after you stop, and side effects' },
 ];
 
 /** Who the paywall is talking to: someone logging a weight-loss medication, or everyone else. */

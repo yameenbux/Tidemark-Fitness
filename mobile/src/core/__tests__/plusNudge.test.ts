@@ -8,7 +8,7 @@ const today = new Date(2026, 10, 23);
 const k = (n: number) => dateKey(addDays(today, n));
 const start = k(-60);
 const plan = { start, startKg: 100, goalKg: 85, goalDate: k(120), targets: buildTargets(100, 85, start, k(120)) };
-const med = { name: 'Weekly injection', doseMg: 5, every: 'week' as const, weekday: today.getDay(), injected: true };
+const med = { name: 'Weekly injection', doseMg: 5, every: 'week' as const, weekday: today.getDay(), injected: true } as import('../types').Medication;
 
 /** Weigh-ins every day for 60 days: falling, then (if `flat`) level for the last 35, long enough for the trend to settle. */
 function weighIns(flat: boolean): Weights {
@@ -74,5 +74,25 @@ describe('Plus cards on Today: never at a bad moment, never too often', () => {
   test('saved memory is cleaned', () => {
     expect(cleanNudgeMemory({ at: 'x', kind: 'spam', key: 5, dismissed: 'yes' })).toEqual(NO_NUDGE);
     expect(cleanNudgeMemory({ at: '2026-11-20', kind: 'flat', key: 'flat:2026-11-20', dismissed: true }).kind).toBe('flat');
+  });
+});
+
+describe('Plus cards on Today: appointments and stopping', () => {
+  const withMed = (m: object, over: Partial<NudgeInput> = {}) => { const i = input(over); return { ...i, settings: { ...i.settings, medication: { ...med, ...m } } }; };
+  test('an appointment in the next three days comes first, even inside the weekly gap, and stays until it’s closed', () => {
+    const memory = { at: k(-2), kind: 'photos' as const, key: 'photos', dismissed: true };
+    expect(pickPlusNudge(withMed({ appointment: k(2) }, { memory }))).toEqual({ kind: 'appointment', key: `appt:${k(2)}`, date: k(2) });
+    expect(pickPlusNudge(withMed({ appointment: k(5) }, { memory }))).toBeNull();                 // too far off: the gap still holds
+    const shownYesterday = { at: k(-1), kind: 'appointment' as const, key: `appt:${k(2)}`, dismissed: false };
+    expect(pickPlusNudge(withMed({ appointment: k(2) }, { memory: shownYesterday }))?.kind).toBe('appointment');
+    expect(pickPlusNudge(withMed({ appointment: k(2) }, { memory: { ...shownYesterday, dismissed: true } }))).toBeNull();
+  });
+  test('an appointment never overrides a bad moment', () => {
+    expect(pickPlusNudge(withMed({ appointment: k(1) }, { effects: { [k(0)]: { effects: ['nausea'], severity: 1 } } }))).toBeNull();
+  });
+  test('stopping: once, in the two weeks after, and no more new-dose cards', () => {
+    const doses = steps(-56, -14, 5, steps(-7, -7, 7.5));
+    expect(pickPlusNudge(withMed({ stoppedOn: k(-3) }, { doses }))).toEqual({ kind: 'stopped', key: `stop:${k(-3)}`, date: k(-3) });
+    expect(pickPlusNudge(withMed({ stoppedOn: k(-20) }, { doses }))?.kind).not.toMatch(/stopped|newDose/);
   });
 });

@@ -1,6 +1,7 @@
 import { fireEvent, render, screen } from '@testing-library/react-native';
-import { MedicationToday, MedicationTrend } from '../components/Medication';
-import { dateKey, parseKey } from '../core/dates';
+import { AfterTreatment, MedicationToday, MedicationTrend } from '../components/Medication';
+import { doseHistoryDays, doseReminderDays } from '../core/medication';
+import { addDays, dateKey, parseKey } from '../core/dates';
 import type { Medication } from '../core/types';
 
 const today = new Date();
@@ -67,5 +68,29 @@ describe('medication cards', () => {
     expect(screen.queryByText('Report for your doctor')).toBeNull();
     fireEvent.press(screen.getByText('See your trend at each dose'));
     expect(onUnlock).toHaveBeenCalled();
+  });
+  test('after stopping: the trend since, as a plain number with Plus, locked without it, and never advice', () => {
+    const pt = (k: string, kg: number) => ({ k, d: parseKey(k), kg, trend: kg });
+    const stopped = { ...med, stoppedOn: '2026-10-01' };
+    const series = [pt('2026-09-20', 90), pt('2026-10-01', 89), pt('2026-10-29', 89.6)];
+    const { rerender } = render(<AfterTreatment med={stopped} series={series} unit="kg" />);
+    expect(screen.getByText(/^\+0\.6 kg$/)).toBeTruthy();
+    expect(screen.getByText(/A record, not advice/)).toBeTruthy();
+    const onUnlock = jest.fn();
+    rerender(<AfterTreatment med={stopped} series={series} unit="kg" onUnlock={onUnlock} />);
+    expect(screen.queryByText(/kg/)).toBeNull();
+    fireEvent.press(screen.getByText('Follow your trend after treatment'));
+    expect(onUnlock).toHaveBeenCalled();
+  });
+  test('after stopping, the dose history lists no unmarked days past the stop date', () => {
+    const weekly = { ...med, every: 'week' as const, weekday: today.getDay() };
+    const stopped = { ...weekly, stoppedOn: dateKey(addDays(today, -15)) };
+    const all = doseHistoryDays(weekly, {}, today), after = doseHistoryDays(stopped, {}, today);
+    expect(after.every(k => k <= stopped.stoppedOn!)).toBe(true);
+    expect(after.length).toBe(all.length - 3);                                 // today, a week ago, two weeks ago gone
+  });
+  test('after stopping, no more dose reminders', () => {
+    expect(doseReminderDays(med, {}, today).length).toBeGreaterThan(0);
+    expect(doseReminderDays({ ...med, stoppedOn: dateKey(today) }, {}, today)).toEqual([]);
   });
 });

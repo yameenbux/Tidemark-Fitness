@@ -54,6 +54,19 @@ describe('medication settings', () => {
     expect(p.onDoses).not.toHaveBeenCalled();
     expect((p.onSave as jest.Mock).mock.calls.at(-1)[0].medication).toBeNull();
   });
+  test('“I’ve stopped taking it” keeps the medication and its history, and turns dose reminders off', async () => {
+    jest.spyOn(Alert, 'alert').mockImplementation((_t, _m, buttons) => buttons?.find(b => b.text === 'Yes, I’ve stopped')?.onPress?.());
+    const p = props({ settings: { ...settings, medication: { ...med, remind: true } }, doses: { [dateKey(today)]: { mg: 2.4 } } });
+    render(<SettingsScreen {...p} initialPage="medication" />);
+    await act(async () => { fireEvent.press(screen.getByText('I’ve stopped taking it')); });
+    expect(screen.getByText(/^Stopped on /)).toBeTruthy();
+    fireEvent.press(screen.getByText('Add a date'));                            // and an appointment, a week out
+    await act(async () => { fireEvent.press(screen.getByLabelText('Back to Settings')); });
+    await waitFor(() => expect(p.onSave).toHaveBeenCalled());                 // saved as the page closes
+    const saved = (p.onSave as jest.Mock).mock.calls.at(-1)[0].medication;
+    expect(saved).toMatchObject({ name: med.name, stoppedOn: dateKey(today), remind: false, appointment: dateKey(addDays(today, 7)) });
+    expect(p.onDoses).not.toHaveBeenCalled();                                   // the history stays
+  });
 });
 
 describe('body and extras', () => {

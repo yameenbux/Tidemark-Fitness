@@ -17,7 +17,9 @@ export function cleanMedication(v: unknown): Medication | null {
   const every = m.every === 'day' ? 'day' : 'week';
   // Weekly medicines are injections unless said otherwise (the GLP-1s); daily ones are tablets unless said otherwise
   const injected = typeof m.injected === 'boolean' ? m.injected : every === 'week';
-  return { name, doseMg: mg != null && mg > 0 && mg <= MAX_DOSE_MG ? Math.round(mg * 1000) / 1000 : null, every, weekday, remind: m.remind === true, injected };
+  const day = (x: unknown) => (validKey(x) ? x : null);
+  return { name, doseMg: mg != null && mg > 0 && mg <= MAX_DOSE_MG ? Math.round(mg * 1000) / 1000 : null, every, weekday, remind: m.remind === true, injected,
+    appointment: day(m.appointment), stoppedOn: day(m.stoppedOn) };
 }
 
 export function cleanDoses(v: unknown): DoseLog {
@@ -90,14 +92,15 @@ export function doseHistoryDays(med: Medication, doses: DoseLog, today: Date = n
   const span = med.every === 'week' ? weeks * 7 : 14;
   for (let i = 0; i < span; i++) {
     const d = addDays(startOfDay(today), -i), k = dateKey(d);
-    if (isDoseDay(med, d) || doses[k]) out.push(k);
+    // After the day they stopped, only doses actually logged: an unmarked day then isn't a missed dose
+    if ((isDoseDay(med, d) && !(med.stoppedOn && k > med.stoppedOn)) || doses[k]) out.push(k);
   }
   return out;
 }
 
 /** Days scheduled for a reminder over the next `days` (doses already marked today are skipped). */
 export function doseReminderDays(med: Medication | null | undefined, doses: DoseLog, today: Date = new Date(), days = 8): Date[] {
-  if (!med) return [];
+  if (!med || med.stoppedOn) return [];   // stopped: no more dose reminders
   const out: Date[] = [];
   for (let i = 0; i < days; i++) {
     const d = addDays(startOfDay(today), i);

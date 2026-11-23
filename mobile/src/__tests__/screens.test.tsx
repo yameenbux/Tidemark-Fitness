@@ -54,6 +54,19 @@ describe('medication settings', () => {
     expect(p.onDoses).not.toHaveBeenCalled();
     expect((p.onSave as jest.Mock).mock.calls.at(-1)[0].medication).toBeNull();
   });
+  test('“I’ve stopped taking it” keeps the medication and its history, and turns dose reminders off', async () => {
+    jest.spyOn(Alert, 'alert').mockImplementation((_t, _m, buttons) => buttons?.find(b => b.text === 'Yes, I’ve stopped')?.onPress?.());
+    const p = props({ settings: { ...settings, medication: { ...med, remind: true } }, doses: { [dateKey(today)]: { mg: 2.4 } } });
+    render(<SettingsScreen {...p} initialPage="medication" />);
+    await act(async () => { fireEvent.press(screen.getByText('I’ve stopped taking it')); });
+    expect(screen.getByText(/^Stopped on /)).toBeTruthy();
+    fireEvent.press(screen.getByText('Add a date'));                            // and an appointment, a week out
+    await act(async () => { fireEvent.press(screen.getByLabelText('Back to Settings')); });
+    await waitFor(() => expect(p.onSave).toHaveBeenCalled());                 // saved as the page closes
+    const saved = (p.onSave as jest.Mock).mock.calls.at(-1)[0].medication;
+    expect(saved).toMatchObject({ name: med.name, stoppedOn: dateKey(today), remind: false, appointment: dateKey(addDays(today, 7)) });
+    expect(p.onDoses).not.toHaveBeenCalled();                                   // the history stays
+  });
 });
 
 describe('body and extras', () => {
@@ -190,7 +203,7 @@ describe('free waist', () => {
   test('logging the waist keeps hips and chest measured with Plus', async () => {
     const day = dateKey(today);
     const onMeasurements = jest.fn();
-    render(<BodyCard waistOnly settings={settings} weights={{}} unit="kg" lengthUnit="cm" onLengthUnit={jest.fn()} photos={{}} onPhotos={jest.fn()}
+    render(<BodyCard free settings={settings} weights={{}} unit="kg" lengthUnit="cm" onLengthUnit={jest.fn()} photos={{}} onPhotos={jest.fn()}
       measurements={{ [day]: { hips: 100, chest: 98 } }} onMeasurements={onMeasurements} />);
     expect(screen.queryByText('Photos')).toBeNull();                              // photos stay Plus
     fireEvent.press(screen.getByText('Measure'));
@@ -199,6 +212,15 @@ describe('free waist', () => {
     fireEvent.press(screen.getByText('Save'));
     await waitFor(() => expect(onMeasurements).toHaveBeenCalled());
     expect(onMeasurements.mock.calls[0][0][day]).toEqual({ waist: 88, hips: 100, chest: 98 });
+  });
+  test('without Plus, everything measured or photographed with Plus stays on show; only adding more is Plus', () => {
+    const onPlus = jest.fn();
+    render(<BodyCard free onPlus={onPlus} settings={settings} weights={{}} unit="kg" lengthUnit="cm" onLengthUnit={jest.fn()}
+      photos={{ [dateKey(today)]: { front: 'a.jpg' } }} onPhotos={jest.fn()} measurements={{ [dateKey(today)]: { hips: 100, chest: 98 } }} onMeasurements={jest.fn()} />);
+    expect(screen.getByLabelText('Hips 100.0 cm')).toBeTruthy();              // measured with Plus, still shown
+    expect(screen.getByLabelText(/^First photo, /)).toBeTruthy();               // the photo too
+    fireEvent.press(screen.getByText('Photos · Plus'));                         // adding another is Plus
+    expect(onPlus).toHaveBeenCalled();
   });
 });
 

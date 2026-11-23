@@ -175,3 +175,29 @@ export async function scheduleTrialReminder(endsAt: number, now: number = Date.n
     return true;
   } catch { return false; }
 }
+
+const RENEWAL_ID = 'plus-renewal';
+export const RENEWAL_NOTICE_DAYS = 7;
+/**
+ * A yearly Plus subscription set to renew: one reminder a week before, so a year's charge is never a surprise (and the
+ * UK's coming subscription rules expect one). Only if notifications are already allowed: this never asks. Cancels
+ * itself when there's nothing to remind about (cancelled, monthly, lifetime, or no Plus).
+ */
+export async function syncRenewalReminder(s: { productId: string | null; expires: number | null; renews?: boolean | null; active: boolean },
+  yearlyId: string, now: number = Date.now()): Promise<boolean> {
+  if (Platform.OS === 'web') return false;
+  try {
+    await Notifications.cancelScheduledNotificationAsync(RENEWAL_ID).catch(() => {});
+    if (!s.active || s.productId !== yearlyId || s.renews !== true || s.expires == null) return false;
+    const at = new Date(s.expires - RENEWAL_NOTICE_DAYS * 86400000);
+    at.setHours(10, 0, 0, 0);
+    if (at.getTime() <= now || !(await Notifications.getPermissionsAsync()).granted) return false;
+    const day = new Date(s.expires).toLocaleDateString(undefined, { day: 'numeric', month: 'long' });
+    await Notifications.scheduleNotificationAsync({
+      identifier: RENEWAL_ID,
+      content: { title: 'Tidemark Plus renews in a week', body: `Your yearly Plus renews on ${day}. To change or cancel, open iPhone Settings › your name › Subscriptions.`, data: { action: 'plus' } },
+      trigger: { type: Notifications.SchedulableTriggerInputTypes.DATE, date: at },
+    });
+    return true;
+  } catch { return false; }
+}

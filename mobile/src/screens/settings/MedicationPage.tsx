@@ -1,10 +1,10 @@
 import { useState } from 'react';
 import { ScrollView, Switch, Text, View } from 'react-native';
-import { DAY_ABBR, DAY_FULL, parseKey, shortDate } from '../../core/dates';
+import { addDays, dateKey, DAY_ABBR, DAY_FULL, longDate, parseKey, shortDate } from '../../core/dates';
 import { doseHistoryDays, isDoseDay } from '../../core/medication';
 import { num } from '../../core/units';
 import type { DoseLog, Medication, Settings } from '../../core/types';
-import { Field } from '../../components/Fields';
+import { DateInput, Field } from '../../components/Fields';
 import { Icon } from '../../components/Icons';
 import { Button, Tabs } from '../../components/ui';
 import { Tap } from '../../components/Motion';
@@ -26,8 +26,11 @@ export function MedicationPage({ settings, doses, onDoses, onSave, onBack }: {
   const [weekday, setWeekday] = useState(cur?.weekday ?? new Date().getDay());
   const [remind, setRemind] = useState(cur?.remind ?? false);
   const [injected, setInjected] = useState(cur?.injected ?? (cur?.every ?? 'week') === 'week');
+  const [appointment, setAppointment] = useState<string | null>(cur?.appointment ?? null);
+  const [stoppedOn, setStoppedOn] = useState<string | null>(cur?.stoppedOn ?? null);
+  const todayK = dateKey(new Date());
   const mg = num(dose);
-  const result: Settings['medication'] = name.trim() ? { name: name.trim(), doseMg: mg > 0 && mg <= 1000 ? mg : null, every, weekday, remind, injected } : null;
+  const result: Settings['medication'] = name.trim() ? { name: name.trim(), doseMg: mg > 0 && mg <= 1000 ? mg : null, every, weekday, remind: remind && !stoppedOn, injected, appointment, stoppedOn } : null;
   const toggleRemind = async (on: boolean) => {
     if (on && !(await allowReminders())) { notify('Notifications are off', 'Turn on notifications for Tidemark in iOS Settings to get dose reminders.'); return; }
     setRemind(on);
@@ -73,6 +76,28 @@ export function MedicationPage({ settings, doses, onDoses, onSave, onBack }: {
           <Switch value={remind} onValueChange={toggleRemind} trackColor={{ false: C.control, true: C.mintInk }} accessibilityLabel="Remind me on dose days" />
         </View>
         <Text style={s.hint}>If you change dose, update it here; earlier doses keep the strength they were logged at.</Text>
+        <View style={[s.form, { marginTop: 16 }]}>
+          <Field label="Next appointment or reorder (optional)">
+            {appointment
+              ? <View style={{ gap: 8 }}>
+                  <DateInput value={appointment} onChange={setAppointment} label="Next appointment or reorder" min={todayK} />
+                  <Button label="Remove the date" kind="ghost" small style={{ alignSelf: 'flex-start' }} onPress={() => setAppointment(null)} />
+                </View>
+              : <Button icon="calendar" label="Add a date" kind="ghost" small style={{ alignSelf: 'flex-start' }} onPress={() => setAppointment(dateKey(addDays(new Date(), 7)))} />}
+          </Field>
+          <Text style={s.hint}>A few days before, Tidemark offers a report of your trend, doses and side effects to take along.</Text>
+        </View>
+        {cur && (stoppedOn
+          ? <View style={[s.form, { marginTop: 16 }]}>
+              <Text style={s.remindTitle}>Stopped on {longDate(stoppedOn)}</Text>
+              <Text style={s.hint}>Dose cards and reminders are off. Your dose history stays, and the Trend tab follows your trend since.</Text>
+              <Button label="I’ve started again" kind="ghost" small style={{ alignSelf: 'flex-start', marginTop: 8 }} onPress={() => setStoppedOn(null)} />
+            </View>
+          : <Button label="I’ve stopped taking it" kind="ghost" small style={{ alignSelf: 'flex-start', marginTop: 16 }} onPress={async () => {
+              const pick = await choose('Stopped taking it?', 'Tidemark turns off dose cards and reminders and keeps your dose history. Talk to your prescriber about anything to do with stopping.',
+                [{ id: 'stop', label: 'Yes, I’ve stopped' }]);
+              if (pick === 'stop') { setStoppedOn(todayK); setRemind(false); }
+            }} />)}
         {cur && <DoseHistory med={cur} doses={doses} onDoses={onDoses} />}
         {cur && <Button label="Stop tracking medication" kind="danger" small style={{ alignSelf: 'flex-start', marginTop: 16 }} onPress={async () => {
           const n = Object.keys(doses).length;

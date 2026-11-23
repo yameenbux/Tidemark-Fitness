@@ -1,5 +1,5 @@
 import * as Notifications from 'expo-notifications';
-import { applyDoseReminders, applyReminder, reminderBudget, remindersSetUntil, scheduleTrialReminder } from '../reminders';
+import { applyDoseReminders, applyReminder, reminderBudget, remindersSetUntil, scheduleTrialReminder, syncRenewalReminder } from '../reminders';
 import type { Medication } from '../core/types';
 
 // What iOS has scheduled, kept in memory so each sync sees the last one's result
@@ -77,5 +77,21 @@ describe('the free-trial reminder', () => {
     const now = new Date(2026, 10, 29, 12).getTime(), ends = new Date(2026, 10, 30, 12).getTime();
     expect(await scheduleTrialReminder(ends, now)).toBe(false);
     expect(pending).toHaveLength(0);
+  });
+});
+
+describe('the yearly renewal reminder', () => {
+  const YEARLY = 'com.yameenbux.tidemark.plus.yearly';
+  const now = new Date(2026, 10, 23, 12).getTime(), renewsOn = new Date(2027, 10, 23, 12).getTime();
+  test('a week before a yearly subscription that is set to renew', async () => {
+    expect(await syncRenewalReminder({ active: true, productId: YEARLY, expires: renewsOn, renews: true }, YEARLY, now)).toBe(true);
+    expect(pending.find(n => n.identifier === 'plus-renewal')!.trigger.date).toEqual(new Date(2027, 10, 16, 10));
+  });
+  test('none once it’s been cancelled, for monthly or lifetime, or when Apple didn’t say; and an old one is removed', async () => {
+    await syncRenewalReminder({ active: true, productId: YEARLY, expires: renewsOn, renews: true }, YEARLY, now);
+    expect(await syncRenewalReminder({ active: true, productId: YEARLY, expires: renewsOn, renews: false }, YEARLY, now)).toBe(false);
+    expect(pending).toHaveLength(0);
+    expect(await syncRenewalReminder({ active: true, productId: 'monthly', expires: renewsOn, renews: true }, YEARLY, now)).toBe(false);
+    expect(await syncRenewalReminder({ active: true, productId: YEARLY, expires: renewsOn, renews: null }, YEARLY, now)).toBe(false);
   });
 });

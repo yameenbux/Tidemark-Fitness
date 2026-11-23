@@ -24,7 +24,7 @@ export const PLUS_PERKS: { feature: PlusFeature; title: string; line: string }[]
   { feature: 'protein', title: 'The protein target', line: 'A daily protein minimum to aim for' },
   { feature: 'report', title: 'The report for your doctor', line: 'A PDF report for your doctor or nurse' },
   { feature: 'protectedBackups', title: 'Password-protected backup', line: 'Password-protected backups' },
-  { feature: 'medication', title: 'Medication insights', line: 'If you take a weight-loss medication: your trend at each dose, and side effects' },
+  { feature: 'medication', title: 'Medication insights', line: 'If you take a weight-loss medication: your trend at each dose and after you stop, and side effects' },
 ];
 
 /** Who the paywall is talking to: someone logging a weight-loss medication, or everyone else. */
@@ -58,8 +58,9 @@ export interface PlusStatus {
   productId: string | null;
   expires: number | null;      // ms; null for lifetime
   checkedAt: number | null;    // ms; when Apple last confirmed this
+  renews?: boolean | null;     // a subscription set to renew (false once cancelled); null when Apple didn't say
 }
-export const NO_PLUS: PlusStatus = { active: false, productId: null, expires: null, checkedAt: null };
+export const NO_PLUS: PlusStatus = { active: false, productId: null, expires: null, checkedAt: null, renews: null };
 
 /** The parts of a store purchase this needs (a subset of expo-iap's Purchase). */
 export interface StorePurchase {
@@ -67,7 +68,7 @@ export interface StorePurchase {
   purchaseState?: string;
   expirationDateIOS?: number | null;
   revocationDateIOS?: number | null;
-  renewalInfoIOS?: { gracePeriodExpirationDate?: number | null } | null;
+  renewalInfoIOS?: { gracePeriodExpirationDate?: number | null; willAutoRenew?: boolean | null } | null;
 }
 
 /**
@@ -80,7 +81,8 @@ export function plusFrom(purchases: StorePurchase[], now: number = Date.now()): 
     if (!ALL_PLUS_IDS.includes(p.productId) || p.revocationDateIOS || (p.purchaseState && p.purchaseState !== 'purchased')) continue;
     if (p.productId === PLUS_PRODUCTS.lifetime) return { active: true, productId: p.productId, expires: null, checkedAt: now };
     const exp = Math.max(p.expirationDateIOS ?? 0, p.renewalInfoIOS?.gracePeriodExpirationDate ?? 0) || null;
-    if (exp != null && exp > now && (!best.active || (best.expires ?? 0) < exp)) best = { active: true, productId: p.productId, expires: exp, checkedAt: now };
+    if (exp != null && exp > now && (!best.active || (best.expires ?? 0) < exp))
+      best = { active: true, productId: p.productId, expires: exp, checkedAt: now, renews: typeof p.renewalInfoIOS?.willAutoRenew === 'boolean' ? p.renewalInfoIOS.willAutoRenew : null };
   }
   return best;
 }
@@ -105,7 +107,7 @@ export function cleanPlus(v: unknown): PlusStatus {
   const o = v as Record<string, unknown>;
   const n = (x: unknown) => (typeof x === 'number' && isFinite(x) ? x : null);
   const productId = typeof o.productId === 'string' && ALL_PLUS_IDS.includes(o.productId) ? o.productId : null;
-  return { active: o.active === true && productId != null, productId, expires: n(o.expires), checkedAt: n(o.checkedAt) };
+  return { active: o.active === true && productId != null, productId, expires: n(o.expires), checkedAt: n(o.checkedAt), renews: typeof o.renews === 'boolean' ? o.renews : null };
 }
 
 /**

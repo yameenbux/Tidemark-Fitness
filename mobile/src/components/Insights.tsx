@@ -98,11 +98,13 @@ export const ChangeTable = memo(function ChangeTable({ series, unit, d = -1 }: {
   );
 });
 
-/** 30-day dot grid per habit (MacroFactor-style), with the consistency figure beside it. */
+/**
+ * 30-day dot grid per habit (MacroFactor-style), with the consistency figure beside it. Every habit, with or without
+ * Plus: it's the person's own history. Without Plus only the first few can be ticked (TodayHabits).
+ */
 export const HabitGrids = memo(function HabitGrids({ settings, habits }: { settings: Settings; habits: HabitLog; today?: string }) {
   useScheme();                                   // repaint when the appearance changes (memo skips parent renders)
-  const { plus } = usePlus();
-  const habitsShown = (x: Settings) => usableHabits(x.habits, plus);   // free: the first few; the rest are kept
+  const habitsShown = (x: Settings) => x.habits;
   if (!habitsShown(settings).length) return null;
   const now = new Date(), from = habitGrid({}, '', 30, now)[0].key;
   return (

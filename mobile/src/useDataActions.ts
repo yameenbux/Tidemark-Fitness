@@ -53,7 +53,7 @@ export function useDataActions(t: Tracker, show: Show, done: () => void, plus = 
   };
 
   const exportCsv = async () => {
-    try { await shareBackup('tidemark-' + dateKey(new Date()) + '.csv', toCsv(state.weights, state.measurements, state.intake, state.notes), 'csv'); }
+    try { await shareBackup('tidemark-' + dateKey(new Date()) + '.csv', toCsv(state.weights, state.measurements, state.intake, state.notes, state.protein ?? {}), 'csv'); }
     catch { notify('Export failed', 'Nothing was shared. Try again.'); }
   };
 

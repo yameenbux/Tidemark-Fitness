@@ -33,7 +33,8 @@ describe('Tidemark Plus', () => {
   });
   test('a renewal Apple couldn’t charge keeps Plus through the billing grace period', () => {
     const grace = (g: number, more = {}) => plusFrom([{ productId: PLUS_PRODUCTS.monthly, expirationDateIOS: now - day, renewalInfoIOS: { gracePeriodExpirationDate: g }, ...more }], now);
-    expect(grace(now + 5 * day)).toEqual({ active: true, productId: PLUS_PRODUCTS.monthly, expires: now + 5 * day, checkedAt: now });
+    expect(grace(now + 5 * day)).toEqual({ active: true, productId: PLUS_PRODUCTS.monthly, expires: now + 5 * day, checkedAt: now, renews: null });
+    expect(grace(now + 5 * day, { renewalInfoIOS: { gracePeriodExpirationDate: now + 5 * day, willAutoRenew: true } }).renews).toBe(true);   // Apple says it will renew
     expect(grace(now - 1).active).toBe(false);                                   // grace period over
     expect(grace(now + 5 * day, { revocationDateIOS: now - day }).active).toBe(false);   // refunded
   });
@@ -47,7 +48,7 @@ describe('Tidemark Plus', () => {
   test('saved status is cleaned: an unknown product can’t switch Plus on', () => {
     expect(cleanPlus({ active: true, productId: 'anything', expires: null })).toEqual({ ...NO_PLUS, productId: null });
     expect(cleanPlus({ active: true, productId: PLUS_PRODUCTS.yearly, expires: 'soon', checkedAt: 5 }))
-      .toEqual({ active: true, productId: PLUS_PRODUCTS.yearly, expires: null, checkedAt: 5 });
+      .toEqual({ active: true, productId: PLUS_PRODUCTS.yearly, expires: null, checkedAt: 5, renews: null });
     expect(cleanPlus('junk')).toEqual(NO_PLUS);
   });
   test('free shows the first 3 habits; the rest are kept, and all show with Plus', () => {

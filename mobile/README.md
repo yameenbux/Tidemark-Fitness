@@ -63,10 +63,17 @@ introductory offer: the £11.99 launch price, then a 7-day free trial) and `com.
   module exists); needs a development or App Store build.
 - **Doctor report** (Plus, `src/core/report.ts`): the last 12 weeks as a PDF made on the phone with `expo-print`.
 - **When the free version mentions Plus** (`src/core/plusNudge.ts`): once after setup, on tapping a Plus feature, and
-  at most one card a week on Today at a moment that matters: a new dose strength, three flat weeks, a first free
-  doctor report, a first progress photo, or a milestone. Never in the first three days, never after a weigh-in that
-  went up or a side effect noted today or yesterday, and never twice for the same occasion. A free trial gets one local
-  reminder two days before it's paid, if notifications are allowed.
+  at most one card a week on Today at a moment that matters: a new dose strength, stopping the medication, three flat
+  weeks, a first free doctor report, a first progress photo, or a milestone. An appointment or reorder date the person
+  set (Settings › Medication) brings a report card up to three days before, whatever the week; Plus users get it as a
+  reminder. Never in the first three days, never after a weigh-in that went up or a side effect noted today or
+  yesterday, and never twice for the same occasion. A free trial gets one local reminder two days before it's paid,
+  and a yearly subscription one a week before it renews, if notifications are allowed.
+- **What stays free to see**: everything the person entered, with or without Plus: measurements and photos taken with
+  Plus, every habit's history, and the CSV export (weights, measurements, calories, protein, notes). Plus is for adding
+  more and for the analysis.
+- **Stopping the medication** (Settings › Medication › "I've stopped taking it"): dose cards and reminders stop, the
+  history stays, and the Trend tab shows the trend since (Plus; the free version shows the card with the number locked).
 - **Protein minimum** (Plus, `src/core/protein.ts`): a daily number of grams the person sets (for example from their GP
   or dietitian). Tidemark never works it out from body weight: that would edge towards clinical advice (see COMPLIANCE.md).
 - **Settings**: an iOS grouped list — plan and breaks, event, units, habits, sessions, meals, calories, a daily weigh-in

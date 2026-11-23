@@ -33,7 +33,11 @@ export interface Settings {
 }
 
 /** A medication taken on a schedule, e.g. a weekly GLP-1 injection. Tidemark only records it; it never advises on dosing. */
-export interface Medication { name: string; doseMg: number | null; every: 'week' | 'day'; weekday: number; remind?: boolean; injected?: boolean }   // weekday: 0 = Sunday
+export interface Medication {
+  name: string; doseMg: number | null; every: 'week' | 'day'; weekday: number; remind?: boolean; injected?: boolean;   // weekday: 0 = Sunday
+  appointment?: string | null;   // the next appointment or reorder the person set (date key), for a report beforehand
+  stoppedOn?: string | null;     // the day they stopped taking it: dose cards and reminders stop, the history stays
+}
 export type SiteId = 'belly-l' | 'belly-r' | 'thigh-l' | 'thigh-r' | 'arm-l' | 'arm-r';
 export type DoseLog = Record<string, { mg: number | null; site?: SiteId }>;   // date -> dose taken that day (and where, for injections)
 export type EffectId = 'nausea' | 'constipation' | 'diarrhoea' | 'heartburn' | 'tired' | 'headache' | 'noAppetite' | 'site';

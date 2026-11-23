@@ -92,6 +92,35 @@ export function MedicationToday({ med, doses, onChange, onHistory, plus, onEffec
 
 /** Trend tab: how the trend moved on each dose, in order. The question people on a GLP-1 ask most. */
 /**
+ * After treatment: how the trend has moved since the day the person stopped, as plain numbers. Descriptive only:
+ * whether that's expected, or what to do about it, is for their prescriber. `onUnlock` makes it the free preview.
+ */
+export function AfterTreatment({ med, series, unit, onUnlock }: { med: Medication; series: TrendPoint[]; unit: Unit; onUnlock?: () => void }) {
+  if (!med.stoppedOn) return null;
+  const stop = med.stoppedOn;
+  const at = series.filter(p => p.k <= stop).at(-1), now = series.at(-1);
+  const weeks = Math.max(0, Math.floor(daysBetween(parseKey(stop), new Date()) / 7));
+  const change = at && now && now.k > stop ? now.trend - at.trend : null;
+  return (
+    <Card title="Since you stopped">
+      <View style={s.row} accessible accessibilityLabel={`Stopped ${med.name} on ${longDate(stop)}${onUnlock ? ', trend change shown with Plus' : change != null ? `, trend ${showChange(change, unit, 1)} since` : ''}`}>
+        <View style={{ flex: 1 }}>
+          <Text style={s.rowTitle}>{med.name} · stopped {shortDate(parseKey(stop))}</Text>
+          <Text style={s.sub}>{weeks ? `${weeks} week${weeks === 1 ? '' : 's'} ago` : 'This week'}</Text>
+        </View>
+        {onUnlock
+          ? <View style={s.hidden}><Icon name="lock" size={13} color={C.inkSoft} strokeWidth={2.4} /><Text style={s.hiddenTxt}>•••</Text></View>
+          : <Text style={s.change}>{change != null ? showChange(change, unit, 1) : '—'}</Text>}
+      </View>
+      {onUnlock
+        ? <View style={s.actions}><Button label="Follow your trend after treatment" kind="primary" small onPress={onUnlock} /></View>
+        : <Text style={s.sub}>{change == null ? 'Weigh in over the coming weeks to see how your trend moves.' : 'How your trend has moved since the day you stopped.'}</Text>}
+      <Text style={s.foot}>A record, not advice: talk to your prescriber about anything to do with stopping or restarting.</Text>
+    </Card>
+  );
+}
+
+/**
  * Each dose and how the trend moved during it, then side-effect patterns. `onUnlock` makes it the free version's preview:
  * the person's own doses are listed but each result is hidden, with one button to Plus. Seeing your own numbers waiting
  * says more than a feature list.

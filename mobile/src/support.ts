@@ -45,3 +45,9 @@ export function errorReportUrl(error: Error, componentStack?: string | null): st
   ].join('\n');
   return `mailto:${SUPPORT_EMAIL}?subject=${encodeURIComponent(`Tidemark error report ${appVersion()}`)}&body=${encodeURIComponent(body)}`;
 }
+
+/**
+ * What Tidemark is for, in one sentence: the same words in Settings, the terms and the App Store description. UK medical
+ * device rules turn largely on software's stated purpose, so this stays a record-keeping app (see COMPLIANCE.md).
+ */
+export const INTENDED_PURPOSE = 'Tidemark is for keeping your own record of your weight, habits and medication, and sharing it with your clinician if you choose. It doesn’t diagnose, treat or advise on medication.';

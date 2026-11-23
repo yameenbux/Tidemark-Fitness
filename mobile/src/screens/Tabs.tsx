@@ -4,7 +4,7 @@ import { usePlus } from '../plus';
 import { CardBoundary } from '../components/States';
 import { ProteinCard } from '../components/Protein';
 import { PlusNudgeCard } from '../components/PlusNudge';
-import { EffectsSheet, MedicationToday, MedicationTrend } from '../components/Medication';
+import { AfterTreatment, EffectsSheet, MedicationToday, MedicationTrend } from '../components/Medication';
 import { isDue, missedDose } from '../core/medication';
 import { FEATURES } from '../features';
 import { cloneElement, isValidElement, useEffect, useState } from 'react';
@@ -84,7 +84,8 @@ export function TodayTab(props: TabProps & { notices: React.ReactNode; onLog: (d
   const d = sign(direction(settings.plan));
   // On a dose day, or when a dose looks missed, the card goes straight under today's list; otherwise it sits lower.
   // It stays put once taken, so Undo doesn't jump away.
-  const med = FEATURES.medication ? settings.medication : null, doseLog = state.doses ?? {};   // dose logging is free
+  // Dose logging is free; once someone marks the medication as stopped, Today stops asking about doses
+  const med = FEATURES.medication && !settings.medication?.stoppedOn ? settings.medication : null, doseLog = state.doses ?? {};
   const [feel, setFeel] = useState(false);
   const doseToday = !!med && (isDue(med, doseLog, now) || !!doseLog[props.today] || !!missedDose(med, doseLog, now));
 
@@ -163,6 +164,8 @@ export function TrendTab({ t, settings, series, today, scrollTop, openSettings, 
         ? <CardBoundary name="Medication"><MedicationTrend med={settings.medication} doses={t.state.doses ?? {}} series={series} unit={t.state.unit} effects={t.state.effects} onUnlock={() => openPaywall('medication')} /></CardBoundary>
         : <PlusTeaser feature="medication" icon="pill" title={`${settings.medication.name} and your trend`}
             body="See how your trend moved at each dose, rotate injection sites, spot side-effect patterns and make a report for your doctor." />)}
+      {FEATURES.medication && settings.medication?.stoppedOn && <CardBoundary name="After treatment">
+        <AfterTreatment med={settings.medication} series={series} unit={t.state.unit} onUnlock={plus ? undefined : () => openPaywall('medication')} /></CardBoundary>}
       <SectionLabel>History</SectionLabel>
       <CardBoundary name="Weigh-ins"><EntriesList settings={settings} weights={state.weights} unit={state.unit} onEdit={onEdit} trend={series} notes={state.notes} /></CardBoundary>
     </TabScreen>
@@ -183,13 +186,13 @@ export function HabitsTab({ t, settings, series, today, scrollTop, openSettings,
 
 export function BodyTab({ t, settings, series, scrollTop, openSettings, show }: TabProps) {
   const { state, prefs } = t;
-  const { plus } = usePlus();
+  const { plus, openPaywall } = usePlus();
   if (!plus) {
-    // Free: the waist, so the tab is never just a locked door; the rest is Plus
+    // Free: adding the waist, so the tab is never just a locked door, and everything already entered stays on show
     const kept = Object.values(state.measurements).some(d => Object.keys(d).some(k => k !== 'waist')) || Object.keys(state.photos).length > 0 || Object.keys(state.intake).length > 0;
     return (
       <TabScreen eyebrow="Beyond the scale" title="Body" onSettings={() => openSettings()} scrollTop={scrollTop}>
-        <CardBoundary name="Waist"><BodyCard waistOnly settings={settings} weights={state.weights} unit={state.unit} lengthUnit={lengthUnitFor(prefs.length, state.unit)}
+        <CardBoundary name="Waist"><BodyCard free onPlus={() => openPaywall('body')} settings={settings} weights={state.weights} unit={state.unit} lengthUnit={lengthUnitFor(prefs.length, state.unit)}
           onLengthUnit={length => t.setPrefs({ length })} measurements={state.measurements} photos={state.photos}
           onMeasurements={m => { t.setMeasurements(m); success(); }} onPhotos={t.setPhotos} /></CardBoundary>
         <PlusTeaser feature="body" icon="body" kept={kept} title="Hips, chest, arms, photos and calories"

@@ -1,14 +1,22 @@
 import { useEffect } from 'react';
-import { dateKey } from '../core/dates';
-import { pickPlusNudge, type PlusNudge } from '../core/plusNudge';
+import { dateKey, DAY_FULL, daysBetween, parseKey, startOfDay } from '../core/dates';
+import { appointmentSoon, pickPlusNudge, type PlusNudge } from '../core/plusNudge';
 import type { TrendPoint } from '../core/trend';
 import { usePlus } from '../plus';
 import type { Tracker } from '../store';
 import { Notice } from './Shell';
 
 /** What each card says. They describe the person's own record and what Plus shows; none of them advises. */
-function words(n: PlusNudge, onMedication: boolean): { title: string; body: string; action: string } {
+function words(n: PlusNudge, onMedication: boolean, freeReport: boolean, plus = false): { title: string; body: string; action: string } {
   switch (n.kind) {
+    case 'appointment': {
+      const days = n.date ? daysBetween(startOfDay(new Date()), parseKey(n.date)) : 0;
+      return { title: days === 0 ? 'Appointment today' : days === 1 ? 'Appointment tomorrow' : `Appointment on ${n.date ? DAY_FULL[parseKey(n.date).getDay()] : 'its way'}`,
+        body: `Take a PDF of your trend, doses and side effects along.${plus ? '' : freeReport ? ' Your first report is free.' : ' Reports are part of Plus.'}`,
+        action: plus ? 'Make my report' : freeReport ? 'Make my free report' : 'See Plus' };
+    }
+    case 'stopped': return { title: 'Following your trend after treatment',
+      body: 'Plus shows how your trend has moved since you stopped, next to your dose history: a record to look at with your prescriber, not advice.', action: 'See Plus' };
     case 'newDose': return { title: n.mg ? `New dose: ${n.mg} mg` : 'A new dose',
       body: 'Plus shows how your trend moves at each dose, next to the one before, with any side effects you note.', action: 'See Plus' };
     case 'flat': return onMedication
@@ -29,7 +37,10 @@ export function PlusNudgeCard({ t, series, onReport }: { t: Tracker; series: Tre
   const { plus, storeAvailable, openPaywall } = usePlus();
   const { state, prefs } = t;
   const settings = state.settings;
-  const nudge = plus || !storeAvailable || !settings ? null : pickPlusNudge({ settings, weights: state.weights, series, doses: state.doses ?? {},
+  const todayD = startOfDay(new Date());
+  const nudge = !settings ? null
+    : plus ? (prefs.plusNudge.at === dateKey(todayD) && prefs.plusNudge.dismissed ? null : appointmentSoon({ settings, memory: prefs.plusNudge }, todayD))
+    : !storeAvailable ? null : pickPlusNudge({ settings, weights: state.weights, series, doses: state.doses ?? {},
     effects: state.effects ?? {}, photos: state.photos, sampleReportUsed: prefs.sampleReport, memory: prefs.plusNudge });
   const today = dateKey(new Date());
   // Remember today's card, so it stays for the day and the next one waits a week
@@ -37,9 +48,11 @@ export function PlusNudgeCard({ t, series, onReport }: { t: Tracker; series: Tre
     if (nudge && prefs.plusNudge.at !== today) t.setPrefs({ plusNudge: { at: today, kind: nudge.kind, key: nudge.key, dismissed: false } });
   }, [nudge, prefs.plusNudge.at, today, t]);
   if (!nudge || !settings) return null;
-  const w = words(nudge, !!settings.medication);
-  const act = nudge.kind === 'report' && onReport ? onReport
+  const freeReport = !prefs.sampleReport;
+  const w = words(nudge, !!settings.medication, freeReport, plus);
+  const act = (nudge.kind === 'report' || (nudge.kind === 'appointment' && (freeReport || plus))) && onReport ? onReport
+    : nudge.kind === 'appointment' ? () => openPaywall('report')
     : () => openPaywall(nudge.kind === 'photos' || (nudge.kind === 'flat' && !settings.medication) ? 'body' : 'medication');
-  return <Notice icon={nudge.kind === 'report' ? 'download' : nudge.kind === 'photos' ? 'body' : 'sparkle'} title={w.title} body={w.body}
+  return <Notice icon={nudge.kind === 'appointment' ? 'calendar' : nudge.kind === 'report' ? 'download' : nudge.kind === 'photos' ? 'body' : 'sparkle'} title={w.title} body={w.body}
     action={w.action} onAction={act} onDismiss={() => t.setPrefs({ plusNudge: { ...prefs.plusNudge, at: today, dismissed: true } })} />;
 }

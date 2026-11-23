@@ -8,13 +8,14 @@ import { direction } from './plan';
 import type { TrendPoint } from './trend';
 import type { DoseLog, EffectLog, PhotoLog, Settings, Weights } from './types';
 
-export type NudgeKind = 'newDose' | 'flat' | 'report' | 'photos';
-export interface PlusNudge { kind: NudgeKind; key: string; mg?: number | null }
+export type NudgeKind = 'appointment' | 'newDose' | 'stopped' | 'flat' | 'report' | 'photos';
+export interface PlusNudge { kind: NudgeKind; key: string; mg?: number | null; date?: string }
 
 /** What was last shown, so a card stays put for its day and the next one waits. */
 export interface NudgeMemory { at: string | null; kind: NudgeKind | null; key: string | null; dismissed: boolean }
 export const NO_NUDGE: NudgeMemory = { at: null, kind: null, key: null, dismissed: false };
-const KINDS: NudgeKind[] = ['newDose', 'flat', 'report', 'photos'];
+const KINDS: NudgeKind[] = ['appointment', 'newDose', 'stopped', 'flat', 'report', 'photos'];
+export const APPOINTMENT_DAYS = 3;   // how far ahead of an appointment the report is offered
 
 export const NUDGE_GAP_DAYS = 7;     // between cards
 export const SETTLE_DAYS = 3;        // after setup: Plus was just offered
@@ -57,7 +58,9 @@ function recentChange(series: TrendPoint[], weights: Weights, today: Date): numb
 function candidates(i: NudgeInput, today: Date): PlusNudge[] {
   const out: PlusNudge[] = [], med = i.settings.medication, m = i.memory;
   const recent = (kind: NudgeKind, days: number) => m.kind === kind && m.at != null && daysBetween(parseKey(m.at), today) < days;
-  if (med) {
+  if (med && med.stoppedOn && daysBetween(parseKey(med.stoppedOn), today) <= 14 && m.key !== `stop:${med.stoppedOn}`)
+    out.push({ kind: 'stopped', key: `stop:${med.stoppedOn}`, date: med.stoppedOn });
+  if (med && !med.stoppedOn) {
     // A new strength in the last two weeks: the question is how the trend moves on it
     const runs = dosePeriods(i.doses, i.series);
     const last = runs[runs.length - 1], prev = runs[runs.length - 2];
@@ -73,6 +76,18 @@ function candidates(i: NudgeInput, today: Date): PlusNudge[] {
   return out;
 }
 
+/**
+ * An appointment or reorder the person set is coming up: the dated need for a report, so it doesn't wait its turn.
+ * Exported for Plus users too, for whom the same card is a reminder rather than an offer.
+ */
+export function appointmentSoon(i: Pick<NudgeInput, 'settings' | 'memory'>, today: Date): PlusNudge | null {
+  const at = i.settings.medication?.appointment;
+  // Shown each day until it's closed or the day has passed
+  if (!at || i.settings.medication?.stoppedOn || (i.memory.key === `appt:${at}` && i.memory.dismissed)) return null;
+  const days = daysBetween(today, parseKey(at));
+  return days >= 0 && days <= APPOINTMENT_DAYS ? { kind: 'appointment', key: `appt:${at}`, date: at } : null;
+}
+
 /** The one Plus card to show on Today, or none. Call only for someone without Plus. */
 export function pickPlusNudge(i: NudgeInput): PlusNudge | null {
   const today = startOfDay(i.today ?? new Date()), m = i.memory;
@@ -80,8 +95,11 @@ export function pickPlusNudge(i: NudgeInput): PlusNudge | null {
   // Today's card stays today's card, unless it was closed or its moment has passed
   if (m.at === dateKey(today)) {
     if (m.dismissed || !m.kind) return null;
-    return candidates({ ...i, memory: { ...m, kind: null, key: null } }, today).find(c => c.kind === m.kind) ?? null;
+    const fresh = { ...i, memory: { ...m, kind: null, key: null } };
+    return [appointmentSoon(fresh, today), ...candidates(fresh, today)].find(c => c?.kind === m.kind) ?? null;
   }
+  const appt = appointmentSoon(i, today);
+  if (appt) return appt;
   if (m.at && daysBetween(parseKey(m.at), today) < NUDGE_GAP_DAYS) return null;
   if (daysBetween(parseKey(i.settings.plan.start), today) < SETTLE_DAYS) return null;
   return candidates(i, today)[0] ?? null;
